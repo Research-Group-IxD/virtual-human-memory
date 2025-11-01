@@ -29,6 +29,10 @@ jobs:
         run: pip install uv
         shell: bash
 
+      - name: Create Venv
+        run: uv venv
+        shell: bash
+
       - name: Install dependencies
         working-directory: ${{ matrix.service }}
         run: uv pip install .[test]

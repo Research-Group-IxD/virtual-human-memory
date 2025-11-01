@@ -3,8 +3,12 @@ name: Python CI
 on:
   push:
     branches: ["main", "dev"]
+    paths:
+      - "common/utils/**"
   pull_request:
     branches: ["main", "dev"]
+    paths:
+      - "common/utils/**"
 
 jobs:
   build-and-test:
@@ -22,8 +26,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install uv
-        run: pip install uv
+      - name: Setup uv
+        uses: astral-sh/setup-uv-action@v1
+        with:
+          uv-version: latest
+
+      - name: Verify files in working directory
+        run: ls -la
 
       - name: Install dependencies
         run: |

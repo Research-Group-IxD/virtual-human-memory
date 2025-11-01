@@ -23,6 +23,11 @@ jobs:
         with:
           submodules: "recursive"
 
+      - name: Switch submodule to dev branch
+        run: |
+          git fetch
+          git checkout dev
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -32,9 +37,6 @@ jobs:
         uses: astral-sh/setup-uv-action@v1
         with:
           uv-version: latest
-
-      - name: Verify files in working directory
-        run: ls -la
 
       - name: Install dependencies
         run: |

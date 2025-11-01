@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ matrix.service }}
-        run: uv pip install .[test]
+        run: uv pip install pytest
         shell: bash
 
       - name: Test with pytest

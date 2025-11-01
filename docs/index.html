@@ -1,0 +1,271 @@
+<!--
+This is a academic project page template. 
+Edit the following fields to finish the project page:
+-   Title
+-   Authors
+-   Author links
+-   Author affiliations
+-   Links to paper, arxiv, supplementary, code, etc
+-   Teaser video
+-   Abstract
+-   Image carousel
+-   Video carousel
+-   Poster
+-   Bibtex
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- (1) Edit the following meta tags for your project -->
+  <meta name="description" content="A multi-agent, psychologically-grounded, long-term memory system for virtual humans, enabling emergent identity through stories over time.">
+  <meta property="og:title" content="Virtual Human Memory: A Multi-Agent Memory Architecture"/>
+  <meta property="og:description" content="A distributed, multi-agent memory system featuring an Indexer, Resonance Engine, and Reteller for psychologically-grounded conversational AI."/>
+  <meta property="og:url" content="https://research-group-ixd.github.io/virtual-human-memory/"/>
+  <meta property="og:image" content="static/images/narrative-memory.png" />
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta name="twitter:title" content="Virtual Human Memory: A Multi-Agent Memory Architecture">
+  <meta name="twitter:description" content="Research project on a distributed, multi-agent memory system for psychologically-grounded conversational AI.">
+  <meta name="twitter:image" content="static/images/narrative-memory.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="keywords" content="virtual human, conversational AI, long-term memory, multi-agent systems, memory architecture, indexer, resonance, reteller, mindlabs, fontys">
+
+  <!-- (2) Change the title of the page -->
+  <title>Virtual Human Memory</title>
+
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+  rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+</head>
+<body>
+
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <!-- (3) Title of the project -->
+            <h1 class="title is-1 publication-title">Virtual Human Memory</h1>
+            <div class="is-size-5 publication-authors">
+              <!-- (4) Authors of the project -->
+              <span class="author-block">
+                <a href="https://www.linkedin.com/in/leonvanbokhorst/" target="_blank">Leon (Lonn) van Bokhorst</a><sup>*</sup>,</span>
+                <span class="author-block">
+                  <a href="https://www.linkedin.com/in/coen-crombach/" target="_blank">Coen Crombach</a><sup>*</sup>,</span>
+                  </div>
+
+                  <div class="is-size-5 publication-authors">
+                    <!-- (5) Author Affiliations -->
+                    <span class="author-block">Fontys University of Applied Sciences, MindLabs</span><br><span class="author-block">Research Group Interaction Design (IxD)</span><br><span class="author-block">Tilburg, The Netherlands</span>
+                    <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span>
+                  </div>
+
+                  <div class="column has-text-centered">
+                    <div class="publication-links">
+                      <!-- (6) Links to project repositories -->
+                      <span class="link-block">
+                        <a href="https://github.com/Research-Group-IxD/virtual-human-memory" target="_blank"
+                        class="external-link button is-normal is-rounded is-dark">
+                        <span class="icon">
+                          <i class="fab fa-github"></i>
+                        </span>
+                        <span>Code (Workspace)</span>
+                      </a>
+                    </span>
+                    <span class="link-block">
+                      <a href="https://github.com/Research-Group-IxD/vhm-worker-indexer" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="fab fa-github"></i>
+                      </span>
+                      <span>Indexer Service</span>
+                    </a>
+                  </span>
+                  <span class="link-block">
+                    <a href="https://github.com/Research-Group-IxD/vhm-worker-resonance" target="_blank"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Resonance Service</span>
+                  </a>
+                </span>
+                  <span class="link-block">
+                    <a href="https://github.com/Research-Group-IxD/vhm-worker-reteller" target="_blank"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Reteller Service</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- (7) Teaser video-->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video poster="" id="tree" autoplay controls muted loop height="100%">
+        <!-- Your video here -->
+        <source src="static/videos/banner_video.mp4"
+        type="video/mp4">
+      </video>
+    </div>
+  </div>
+</section>
+<!-- End teaser video -->
+
+<!-- (8) Paper abstract -->
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Introduction</h2>
+        <div class="content has-text-justified">
+          <p>
+            Current virtual human memory systems often feel static and brittle. Our research introduces a dynamic, psychologically-grounded alternative where a virtual human's <strong>identity emerges from the stories it tells over time</strong>. We present the Virtual Human Memory (VHM) project, a distributed, multi-agent architecture that models long-term memory as a living, evolving process. The system comprises three core services: an <strong>Indexer</strong> that ingests new memories, a <strong>Resonance Engine</strong> that calculates their emotional and contextual significance, and a <strong>Reteller</strong> that weaves these memories into coherent, dynamic narratives.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            We present a multi-agent system for long-term virtual human memory. The architecture is composed of loosely coupled microservices communicating over a message bus (e.g., Kafka). The <strong>Indexer</strong> receives new events and stores them as memory 'anchors' in a vector database, enriched with metadata like salience and timestamps. The <strong>Resonance Engine</strong> continuously evaluates incoming stimuli against the memory store, calculating an activation score based on similarity, salience, and temporal decay, modeled on the Ebbinghaus forgetting curve. Finally, the <strong>Reteller</strong> service uses the most highly activated memories to generate adaptive, context-aware narratives, or 'flux,' via a Large Language Model (LLM). This separation of concerns allows for a scalable, robust, and psychologically plausible memory system that enables virtual humans to develop a unique and evolving identity.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Results</h2>
+        <div class="content has-text-justified">
+          <ul>
+            <li><strong>Temporal Decay:</strong> λ = 0.002 yields human-like forgetting: 99.8% retention after 1 day, 94.2% after 30 days, 48.2% after 1 year.</li>
+            <li><strong>Salience × Decay:</strong> A 180-day critical outage (salience 2.5) outranks a 2-day trivial chat (salience 0.3), mirroring flashbulb memory.</li>
+            <li><strong>Anchor-to-Flux Retelling:</strong> LLM outputs preserve factual anchors while naturally shifting detail and tone as memories age.</li>
+            <li><strong>Scalability:</strong> Kafka + Qdrant handle 100k anchors and multi-agent queries with <500ms latency in preliminary tests.</li>
+            <li><strong>Deployment:</strong> GPU-first (Ollama + Phi4/Qwen3 with BGE-M3) with API fallback (Groq/Gemini/OpenAI) to ensure continuity.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Discussion</h2>
+        <div class="content has-text-justified">
+          <p>
+            Anchors plus flux deliver controllable yet expressive memory that users perceive as coherent and continuous. Key limitations include qualitative character validation and foundational security. Our upcoming 12-week research sprint targets multi-agent sharing, personality-aware flux, audit trails, and large-scale benchmarks. Future directions include emotional anchors, cross-lingual retelling, and memory reconsolidation effects.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Conclusion</h2>
+        <div class="content has-text-justified">
+          <p>
+            The Anchor-and-Flux model offers a psychologically grounded path to believable virtual humans. By separating factual anchors from adaptive flux, we model how people remember, forget, and retell experiences. The proof-of-concept validates the approach technically and experimentally. Next steps focus on production integration within the MindLabs virtual human platform, scaling to multi-agent scenarios, and extending the research for publication.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- (13) BibTex citation -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <p>If you reference this work, please cite the research proposal below.</p>
+      <pre><code>@misc{vanbokhorst2025vhm,
+  author       = {van Bokhorst, Leon and Crombach, Coen},
+  title        = {A Multi-Agent Architecture for Virtual Human Memory},
+  howpublished = {Fontys University of Applied Sciences, MindLabs},
+  year         = {2025},
+  url          = {https://research-group-ixd.github.io/virtual-human-memory/}
+}</code></pre>
+    </div>
+  </section>
+<!--End BibTex citation -->
+
+
+  <footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+
+          <p>
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            You are free to borrow the source code of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Statcounter tracking code -->
+  
+<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+    <!-- End of Statcounter Code -->
+
+  </body>
+  </html>

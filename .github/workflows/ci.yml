@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          [common/utils, workers/indexer, workers/resonance, workers/reteller]
+
+    steps:
+      - name: Checkout repo and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        shell: bash
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.service }}
+        run: ~/.cargo/bin/uv pip install .[test]
+        shell: bash
+
+      - name: Test with pytest
+        working-directory: ${{ matrix.service }}
+        run: ~/.cargo/bin/uv run pytest
+        shell: bash

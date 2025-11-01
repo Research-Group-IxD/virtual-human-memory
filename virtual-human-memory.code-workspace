@@ -39,7 +39,7 @@
 			"ms-python.python",
 			"ms-kubernetes-tools.vscode-kubernetes-tools",
 			"ms-azuretools.vscode-docker",
-			"redhat.vscode-yaml",
+			"redhat.vscode-yaml"
 		]
 	},
 	"launch": {

@@ -1,5 +1,7 @@
 # Virtual Human Memory (VHM)
 
+[![utils](https://github.com/Research-Group-IxD/vhm-common-utils/actions/workflows/ci.yml/badge.svg)](https://github.com/Research-Group-IxD/vhm-common-utils/actions/workflows/ci.yml)
+
 This repository is the central workspace for the Virtual Human Memory (VHM) project, a multi-agent, psychologically-grounded, long-term memory system for virtual humans. Our goal is to enable emergent identity through the stories virtual humans tell over time.
 
 **[➡️ View the full Project Page here](https://research-group-ixd.github.io/virtual-human-memory/)**

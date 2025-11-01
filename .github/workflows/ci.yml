@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         service:
-          [common/utils, workers/indexer, workers/resonance, workers/reteller]
+          [common/utils, workers/indexer, workers/resonance, workers/reteller] 
 
     steps:
       - name: Checkout repo and submodules

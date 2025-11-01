@@ -31,10 +31,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ matrix.service }}
-        run: ~/.cargo/bin/uv pip install .[test]
+        run: uv pip install .[test]
         shell: bash
 
       - name: Test with pytest
         working-directory: ${{ matrix.service }}
-        run: ~/.cargo/bin/uv run pytest
+        run: uv run pytest
         shell: bash

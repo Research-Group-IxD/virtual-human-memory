@@ -1,0 +1,57 @@
+{
+	"folders": [
+		{
+			"name": "VHM: Indexer Worker",
+			"path": "workers/indexer"
+		},
+		{
+			"name": "VHM: Resonance Worker",
+			"path": "workers/resonance"
+		},
+		{
+			"name": "VHM: Reteller Worker",
+			"path": "workers/reteller"
+		},
+		{
+			"name": "VHM: Common Utilities",
+			"path": "common/utils"
+		},
+		{
+			"name": "VHM: Kubernetes",
+			"path": "k8s"
+		},
+		{
+			"name": "ROOT: Virtual Human Memory",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/__pycache__": true,
+			"**/.venv": true
+		},
+		"python.formatting.provider": "black",
+		"editor.formatOnSave": true
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-python.python",
+			"ms-kubernetes-tools.vscode-kubernetes-tools",
+			"ms-azuretools.vscode-docker",
+			"redhat.vscode-yaml",
+			"eamodio.gitlens"
+		]
+	},
+	"launch": {
+		"compounds": [
+			{
+				"name": "Debug All VHM Workers",
+				"configurations": [
+					"Attach to Indexer",
+					"Attach to Resonance",
+					"Attach to Reteller"
+				]
+			}
+		]
+	}
+}

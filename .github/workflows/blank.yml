@@ -1,0 +1,28 @@
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout root repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Show files
+        run: |
+          pwd
+          ls -la
+          echo "Submodule dir:"
+          ls -la path/to/submodule
+
+      - name: Run submodule tests
+        working-directory: path/to/submodule
+        run: |
+          # run the same test/build scripts the submodule repo would run
+          ./ci/run-tests.sh || exit 1

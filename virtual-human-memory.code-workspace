@@ -32,7 +32,7 @@
 		},
 		"python.formatting.provider": "black",
 		"editor.formatOnSave": true,
-		"liveServer.settings.multiRootWorkspaceName": "docs"
+		"liveServer.settings.multiRootWorkspaceName": "ROOT: Virtual Human Memory"
 	},
 	"extensions": {
 		"recommendations": [

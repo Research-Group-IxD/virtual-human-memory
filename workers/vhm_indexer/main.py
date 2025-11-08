@@ -25,9 +25,13 @@ def ensure_collection(client: QdrantClient):
     # Check if collection exists and has correct dimensions
     if QDRANT_COLLECTION in names:
         collection_info = client.get_collection(QDRANT_COLLECTION)
-        if collection_info.config.params.vectors.size != dim:
+        config = getattr(collection_info, "config", None)
+        params = getattr(config, "params", None) if config else None
+        vectors = getattr(params, "vectors", None) if params else None
+        size = getattr(vectors, "size", None) if vectors else None
+        if size != dim:
             print(
-                f"[indexer] Collection has wrong dimensions ({collection_info.config.params.vectors.size} vs {dim}), recreating..."
+                f"[indexer] Collection has wrong dimensions ({size} vs {dim}), recreating..."
             )
             client.delete_collection(QDRANT_COLLECTION)
             names.remove(QDRANT_COLLECTION)

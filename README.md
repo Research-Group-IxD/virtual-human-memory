@@ -10,17 +10,18 @@ This repository is the central monorepo for the Virtual Human Memory (VHM) proje
 
 The VHM system is built on a distributed, microservices architecture orchestrated by Kubernetes. This monorepo contains all the code for the following services:
 
--   `workers/indexer`: Ingests and indexes new memories.
--   `workers/resonance`: Calculates the emotional and contextual significance of memories.
--   `workers/reteller`: Weaves memories into coherent, dynamic narratives.
--   `common/utils`: Shared utilities and data models for all services.
--   `k8s/`: All Kubernetes manifests for deploying the system.
+- `workers/indexer`: Ingests and indexes new memories.
+- `workers/resonance`: Calculates the emotional and contextual significance of memories.
+- `workers/reteller`: Weaves memories into coherent, dynamic narratives.
+- `common/utils`: Shared utilities and data models for all services.
+- `k8s/`: All Kubernetes manifests for deploying the system.
 
 ## Local Development & Deployment
 
 This project uses `uv` for Python environment management and Minikube for local Kubernetes deployment.
 
 ### 1. Prerequisites
+
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [Minikube](https://minikube.sigs.k8s.io/docs/start/)
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
@@ -92,6 +93,26 @@ Once your images are pushed, you can deploy them to any Kubernetes cluster.
 ```bash
 # This will pull the newly pushed images from ghcr.io
 kubectl apply -k k8s/
+```
+
+## CI/CD Workflows
+
+We use GitHub Actions to keep the dojo disciplined:
+
+- **CI (`ci.yaml`)** runs on every push and pull request. It installs dependencies with `uv`, runs the placeholder Pytest suite, and builds each worker image using `docker/worker.Dockerfile`. These smoke tests will fail once you replace the placeholders with real assertions.
+- **Publish (`publish.yaml`)** can be triggered manually from the Actions tab. Choose the worker and tag, and the workflow will build the image and push it to `ghcr.io/research-group-ixd` using the `GITHUB_TOKEN`.
+
+To run the same checks locally:
+
+```bash
+# Install dependencies and run the placeholder tests
+uv sync
+uv run pytest
+
+# Build a worker image the same way CI does
+docker build -f docker/worker.Dockerfile \
+  --build-arg WORKER_MODULE=workers.vhm_indexer.main \
+  -t vhm-indexer:test .
 ```
 
 For detailed information about the project's architecture, research goals, and results, please see our [full project page](https://research-group-ixd.github.io/virtual-human-memory/).

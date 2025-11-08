@@ -30,6 +30,7 @@ dependencies = [
     "pydantic-core>=2.16.2",
     "annotated-types>=0.7.0",
     "typing-inspection>=0.4.2",
+    "pytest>=8.3.0",
 ]
 
 [build-system]

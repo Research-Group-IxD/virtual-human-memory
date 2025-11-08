@@ -6,7 +6,7 @@ The system's logic is distributed across three independent, containerized Python
 
 ### 3.1 Indexer
 
-*   **Source Code**: `convai_narrative_memory_poc/workers/indexer/main.py`
+*   **Source Code**: `workers/vhm_indexer/main.py`
 *   **Purpose**: To process new memories, convert them into a searchable format, and store them in the long-term vector database.
 *   **Kafka Input Topic**: `anchors-write`
 *   **Kafka Output Topic**: `anchors-indexed`
@@ -32,7 +32,7 @@ The system's logic is distributed across three independent, containerized Python
 
 ### 3.2 Resonance
 
-*   **Source Code**: `convai_narrative_memory_poc/workers/resonance/main.py`
+*   **Source Code**: `workers/vhm_resonance/main.py`
 *   **Purpose**: To simulate the act of human recall. It searches for relevant memories and applies a psychological model to determine which ones are the most "active" or top-of-mind.
 *   **Kafka Input Topic**: `recall-request`
 *   **Kafka Output Topic**: `recall-response`
@@ -59,7 +59,7 @@ The system's logic is distributed across three independent, containerized Python
 
 ### 3.3 Reteller
 
-*   **Source Code**: `convai_narrative_memory_poc/workers/reteller/main.py`
+*   **Source Code**: `workers/vhm_reteller/main.py`
 *   **Purpose**: To act as the final narrative-generation layer. It takes the raw, disconnected memory "beats" from the Resonance worker and weaves them into a single, coherent, human-like story.
 *   **Kafka Input Topic**: `recall-response`
 *   **Kafka Output Topic**: `retell-response`

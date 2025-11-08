@@ -1,4 +1,4 @@
-import os, json, time, sys, datetime as dt
+import json, sys
 from confluent_kafka import Consumer, Producer
 from qdrant_client import QdrantClient
 from qdrant_client.http import models

@@ -206,6 +206,7 @@ def call_openai(messages):
         )
         return resp.choices[0].message.content
     except Exception as e:
+        print(f"[reteller] OpenAI error: {e}", file=sys.stderr)
         return None
 
 

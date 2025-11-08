@@ -302,40 +302,40 @@ def main():
     producer = Producer({"bootstrap.servers": KAFKA_BOOTSTRAP})
     consumer.subscribe([TOP_IN])
     print("[reteller] listening...")
-    while True:
-        msg = consumer.poll(1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            print(f"[reteller] error: {msg.error()}", file=sys.stderr)
-            continue
-        try:
-            payload = json.loads(msg.value().decode("utf-8"))
-            request_id = payload["request_id"]
-            beats = payload["beats"]
-            guidance = build_narrative_guidance(beats)
-            text = None
-            messages = [
-                {"role": "system", "content": guidance["system"]},
-                {"role": "user", "content": guidance["user"]},
-            ]
-            if OPENAI_API_KEY:
-                text = call_openai(messages)
-            if text is None:
-                text = call_portkey(messages)
-            if text is None and OLLAMA_BASE_URL:
-                prompt = "\n\n".join([guidance["system"], guidance["user"]])
-                text = call_ollama(prompt)
-            if text is None:
-                text = retell_stub(beats)
-            out = {"request_id": request_id, "retelling": text}
-            producer.produce(TOP_OUT, json.dumps(out).encode("utf-8"))
-            producer.flush()
-            print(f"[reteller] retold {request_id}")
-        except Exception as e:
-            print(f"[reteller] exception: {e}", file=sys.stderr)
-    consumer.close()
-
-
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                print(f"[reteller] error: {msg.error()}", file=sys.stderr)
+                continue
+            try:
+                payload = json.loads(msg.value().decode("utf-8"))
+                request_id = payload["request_id"]
+                beats = payload["beats"]
+                guidance = build_narrative_guidance(beats)
+                text = None
+                messages = [
+                    {"role": "system", "content": guidance["system"]},
+                    {"role": "user", "content": guidance["user"]},
+                ]
+                if OPENAI_API_KEY:
+                    text = call_openai(messages)
+                if text is None:
+                    text = call_portkey(messages)
+                if text is None and OLLAMA_BASE_URL:
+                    prompt = "\n\n".join([guidance["system"], guidance["user"]])
+                    text = call_ollama(prompt)
+                if text is None:
+                    text = retell_stub(beats)
+                out = {"request_id": request_id, "retelling": text}
+                producer.produce(TOP_OUT, json.dumps(out).encode("utf-8"))
+                producer.flush()
+                print(f"[reteller] retold {request_id}")
+            except Exception as e:
+                print(f"[reteller] exception: {e}", file=sys.stderr)
+    finally:
+        consumer.close()
 if __name__ == "__main__":
     main()

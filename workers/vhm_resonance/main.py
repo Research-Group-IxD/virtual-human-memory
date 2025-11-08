@@ -4,7 +4,6 @@ import math
 import datetime as dt
 from confluent_kafka import Consumer, Producer
 from qdrant_client import QdrantClient
-from qdrant_client.http import models
 
 from vhm_common_utils.config import (
     QDRANT_URL,

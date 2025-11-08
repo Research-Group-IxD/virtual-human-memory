@@ -1,4 +1,4 @@
-import os, json, sys, re, datetime as dt, collections
+import json, sys, re, collections
 from typing import List, Dict, Any
 
 from confluent_kafka import Consumer, Producer

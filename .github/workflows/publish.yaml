@@ -1,0 +1,73 @@
+name: Publish Worker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: "Worker to publish"
+        required: true
+        default: "indexer"
+        type: choice
+        options:
+          - indexer
+          - resonance
+          - reteller
+      tag:
+        description: "Image tag (e.g., 0.1.1)"
+        required: true
+        default: "0.1.1"
+
+env:
+  REGISTRY: ghcr.io
+  ORG: research-group-ixd
+
+jobs:
+  publish:
+    name: Publish ${{ github.event.inputs.worker }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        env:
+          WORKER: ${{ github.event.inputs.worker }}
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          case "$WORKER" in
+            indexer)
+              MODULE="workers.vhm_indexer.main"
+              ;;
+            resonance)
+              MODULE="workers.vhm_resonance.main"
+              ;;
+            reteller)
+              MODULE="workers.vhm_reteller.main"
+              ;;
+            *)
+              echo "Unknown worker: $WORKER" >&2
+              exit 1
+              ;;
+          esac
+
+          IMAGE="$REGISTRY/$ORG/vhm-$WORKER:$TAG"
+
+          echo "Building $IMAGE using module $MODULE"
+
+          docker build \
+            -f docker/worker.Dockerfile \
+            --build-arg WORKER_MODULE="$MODULE" \
+            -t "$IMAGE" \
+            .
+
+          docker push "$IMAGE"

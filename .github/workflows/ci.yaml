@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          pip install --upgrade pip
+          pip install uv
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest
+
+  build-workers:
+    name: Build worker images
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: indexer
+            module: workers.vhm_indexer.main
+          - name: resonance
+            module: workers.vhm_resonance.main
+          - name: reteller
+            module: workers.vhm_reteller.main
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.name }} image
+        run: |
+          docker build \
+            -f docker/worker.Dockerfile \
+            --build-arg WORKER_MODULE=${{ matrix.module }} \
+            -t ${{ matrix.name }}:${{ github.sha }} \
+            .

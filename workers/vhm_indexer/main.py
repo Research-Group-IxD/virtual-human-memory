@@ -1,4 +1,4 @@
-import os, json, time, sys, datetime as dt
+import json, sys
 from confluent_kafka import Consumer, Producer
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
@@ -25,9 +25,13 @@ def ensure_collection(client: QdrantClient):
     # Check if collection exists and has correct dimensions
     if QDRANT_COLLECTION in names:
         collection_info = client.get_collection(QDRANT_COLLECTION)
-        if collection_info.config.params.vectors.size != dim:
+        config = getattr(collection_info, "config", None)
+        params = getattr(config, "params", None) if config else None
+        vectors = getattr(params, "vectors", None) if params else None
+        size = getattr(vectors, "size", None) if vectors else None
+        if size != dim:
             print(
-                f"[indexer] Collection has wrong dimensions ({collection_info.config.params.vectors.size} vs {dim}), recreating..."
+                f"[indexer] Collection has wrong dimensions ({size} vs {dim}), recreating..."
             )
             client.delete_collection(QDRANT_COLLECTION)
             names.remove(QDRANT_COLLECTION)
@@ -79,58 +83,60 @@ def main():
     producer = Producer({"bootstrap.servers": KAFKA_BOOTSTRAP})
     consumer.subscribe([TOP_IN])
     print("[indexer] listening...")
-    while True:
-        msg = consumer.poll(1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            print(f"[indexer] error: {msg.error()}", file=sys.stderr)
-            continue
-        try:
-            payload = json.loads(msg.value().decode("utf-8"))
-            anchor_id = payload.get("anchor_id")
-            text = payload["text"]
-            stored_at = payload["stored_at"]
-            meta = payload.get("meta", {})
-            salience = float(payload.get("salience", 1.0))
-            if anchor_exists(client, anchor_id):
-                warn_msg = {
-                    "anchor_id": anchor_id,
-                    "ok": False,
-                    "reason": "anchor_immutable_violation",
-                    "detail": "Anchor already exists; skipping write",
-                }
-                producer.produce(TOP_OUT, json.dumps(warn_msg).encode("utf-8"))
-                producer.flush()
-                print(
-                    f"[indexer] WARNING: anchor {anchor_id} already exists, skipping",
-                    file=sys.stderr,
-                )
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
                 continue
-            embedding = get_embedding(text)
-            client.upsert(
-                collection_name=QDRANT_COLLECTION,
-                wait=True,
-                points=[
-                    models.PointStruct(
-                        id=anchor_id,
-                        vector=embedding,
-                        payload={
-                            "text": text,
-                            "stored_at": stored_at,
-                            "salience": salience,
-                            "meta": meta,
-                        },
+            if msg.error():
+                print(f"[indexer] error: {msg.error()}", file=sys.stderr)
+                continue
+            try:
+                payload = json.loads(msg.value().decode("utf-8"))
+                anchor_id = payload.get("anchor_id")
+                text = payload["text"]
+                stored_at = payload["stored_at"]
+                meta = payload.get("meta", {})
+                salience = float(payload.get("salience", 1.0))
+                if anchor_exists(client, anchor_id):
+                    warn_msg = {
+                        "anchor_id": anchor_id,
+                        "ok": False,
+                        "reason": "anchor_immutable_violation",
+                        "detail": "Anchor already exists; skipping write",
+                    }
+                    producer.produce(TOP_OUT, json.dumps(warn_msg).encode("utf-8"))
+                    producer.flush()
+                    print(
+                        f"[indexer] WARNING: anchor {anchor_id} already exists, skipping",
+                        file=sys.stderr,
                     )
-                ],
-            )
-            out = {"anchor_id": anchor_id, "ok": True}
-            producer.produce(TOP_OUT, json.dumps(out).encode("utf-8"))
-            producer.flush()
-            print(f"[indexer] indexed {anchor_id}")
-        except Exception as e:
-            print(f"[indexer] exception: {e}", file=sys.stderr)
-    consumer.close()
+                    continue
+                embedding = get_embedding(text)
+                client.upsert(
+                    collection_name=QDRANT_COLLECTION,
+                    wait=True,
+                    points=[
+                        models.PointStruct(
+                            id=anchor_id,
+                            vector=embedding,
+                            payload={
+                                "text": text,
+                                "stored_at": stored_at,
+                                "salience": salience,
+                                "meta": meta,
+                            },
+                        )
+                    ],
+                )
+                out = {"anchor_id": anchor_id, "ok": True}
+                producer.produce(TOP_OUT, json.dumps(out).encode("utf-8"))
+                producer.flush()
+                print(f"[indexer] indexed {anchor_id}")
+            except Exception as e:
+                print(f"[indexer] exception: {e}", file=sys.stderr)
+    finally:
+        consumer.close()
 
 
 if __name__ == "__main__":

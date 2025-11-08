@@ -4,7 +4,6 @@ import math
 import datetime as dt
 from confluent_kafka import Consumer, Producer
 from qdrant_client import QdrantClient
-from qdrant_client.http import models
 
 from vhm_common_utils.config import (
     QDRANT_URL,
@@ -142,9 +141,6 @@ def main():
             top_k = int(payload.get("top_k", 5))
             session_id = payload.get("session_id")
             ignore_ids = set(payload.get("ignore_anchor_ids") or [])
-            assumed_age = payload.get(
-                "assume_anchor_age"
-            )  # optional ISO 8601 duration, not used here
             now_iso = payload.get("now")
             now = (
                 dt.datetime.fromisoformat(now_iso.replace("Z", "+00:00")).replace(

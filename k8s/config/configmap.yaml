@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vhm-config
+  namespace: vhm
+data:
+  # Kafka Settings
+  KAFKA_BOOTSTRAP: "kafka-service:9092"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  
+  # Qdrant Settings
+  QDRANT_URL: "http://qdrant-service:6333"
+  QDRANT_COLLECTION: "anchors"
+  
+  # Embedding Settings
+  EMBEDDING_MODEL: "deterministic"
+  OLLAMA_BASE_URL: "http://localhost:11434"
+  OLLAMA_MODEL: "llama3"
+  
+  # Reteller defaults
+  OPENAI_MODEL: "gpt-4o-mini"
+  PORTKEY_BASE_URL: "https://api.portkey.ai/v1"
+  PORTKEY_CONFIG_ID: ""
+  PORTKEY_MODEL: ""
+  
+  # Resonance defaults
+  RESONANCE_MAX_BEATS: "3"
+  RESONANCE_DIVERSITY_THRESHOLD: "0.85"
+

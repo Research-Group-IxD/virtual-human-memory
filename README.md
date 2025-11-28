@@ -16,6 +16,11 @@ The VHM system is built on a distributed, microservices architecture orchestrate
 - `common/utils`: Shared utilities and data models for all services.
 - `k8s/`: All Kubernetes manifests for deploying the system.
 
+### Resonance Worker (Production-Ready Highlights)
+- Typed configuration surface backed by Pydantic ensures consistent defaults across dev, staging, and prod.
+- Structured logging + retry-aware Qdrant calls keep recall behaviour transparent under load.
+- Deterministic request/response models now power richer unit tests (`uv run pytest -k resonance`) for CI confidence.
+
 ## Local Development & Deployment
 
 This project uses `uv` for Python environment management and Minikube for local Kubernetes deployment.

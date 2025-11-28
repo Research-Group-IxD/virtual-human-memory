@@ -136,7 +136,7 @@ def normalize_datetime(value: dt.datetime) -> dt.datetime:
 
 
 class ResonanceWorker:
-    """Co-ordinates Kafka consumption, Qdrant recall, and response publication."""
+    """Coordinates Kafka consumption, Qdrant recall, and response publication."""
 
     def __init__(
         self,

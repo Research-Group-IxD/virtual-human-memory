@@ -15,6 +15,11 @@ def ensure_repository_on_path() -> None:
             root_str = str(candidate)
             if root_str not in sys.path:
                 sys.path.insert(0, root_str)
+            utils_path = candidate / "common" / "utils"
+            if utils_path.exists():
+                utils_str = str(utils_path)
+                if utils_str not in sys.path:
+                    sys.path.insert(0, utils_str)
             return
     # Fallback for unusual layouts: add the grandparent directory.
     fallback = str(current.parents[2])

@@ -22,6 +22,7 @@ Hello future padawan! This scroll captures how we unblocked the VHM workers on M
 | Entry point | Generates simple shell launcher using `$WORKER_MODULE`. | Same image works for all workers; no quoting bugs. |
 | PYTHONPATH | Set to `/app:/app/common/utils`. | Imports like `from vhm_common_utils import ...` finally resolve inside the container. |
 | Images | `eval "$(minikube docker-env)"` then rebuilt `vhm-indexer:0.1.1`, `vhm-resonance:0.1.0`, `vhm-reteller:0.1.0`. | Minikube now has fresh images; pods stop pulling broken ones. |
+| Resonance worker (`workers/vhm_resonance/main.py`) | Modular refactor with typed settings, structured logging, and Qdrant retry logic. | Recall stays stable under transient broker hiccups and is easier to debug. |
 | Deployments | `kubectl rollout restart deployment/<worker> -n vhm`. | Forces K8s to pick up the new images and env. |
 
 ---
@@ -82,6 +83,7 @@ eval "$(minikube docker-env -u)"
 - **Image Drift**: If code changes, rebuild images using the same commands. Forgetting to rebuild = pods still run old code.
 - **Docker Context**: Always confirm `eval "$(minikube docker-env)"` is active before building, or images land on the host daemon and Minikube won’t see them.
 - **Health Probes**: All workers run a FastAPI health server on port 8080. `kubectl get pods` should show `READY 1/1` once the `/health` endpoint passes.
+- **Resonance Logs**: Tail resonance with `kubectl logs` and tweak verbosity via `RESONANCE_LOG_LEVEL`. Expect structured INFO/ERROR entries with request IDs.
 
 ---
 
@@ -107,6 +109,4 @@ eval "$(minikube docker-env -u)"
 ---
 
 You’re now armed with the same kata that freed the cluster from the CrashLoop dojo. Go forth and wield it wisely! 🚀
-
-
 

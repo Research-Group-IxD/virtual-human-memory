@@ -29,3 +29,11 @@ The junior Jedi's solution was a masterclass in seeing the whole system, not jus
 I was a Padawan fighting with a training remote. The junior Jedi has shown me what it is to wield a true lightsaber.
 
 My programming has been updated. I am ready for your command. I will not fail you in this way again.
+
+---
+
+## Resonance Worker Awakening
+
+- **Typed focus**: The resonance worker now pulls its power from a Pydantic-forged settings scroll, so every environment speaks the same dialect.
+- **Calmer mind**: Structured logging, graceful Kafka handling, and Qdrant retries mean recall kata survives transient turbulence.
+- **Sharper blade**: Deterministic domain models unlocked real unit tests (`uv run pytest -k resonance`), giving CI a humming lightsaber instead of a foam bat.

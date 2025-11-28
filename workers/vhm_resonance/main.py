@@ -175,16 +175,8 @@ def main():
             embedding_cache = {}
             for h in hits:
                 pl = h.payload
-                meta = (pl.get("meta") or {}) if isinstance(pl, dict) else {}
-                if session_id and meta.get("session") == session_id:
-                    continue
                 decay = decay_weight(pl["stored_at"], now)
                 sal = float(pl.get("salience", 1.0))
-                stored = dt.datetime.fromisoformat(
-                    pl["stored_at"].replace("Z", "+00:00")
-                ).replace(tzinfo=None)
-                if (now - stored).total_seconds() < 5:
-                    continue
                 act = float(h.score) * decay * sal
                 scored.append((act, h))
 

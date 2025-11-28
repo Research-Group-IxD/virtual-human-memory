@@ -30,6 +30,8 @@ jobs:
         run: uv pip install -e .
 
       - name: Run tests
+        env:
+          PYTHONPATH: "${{ github.workspace }}:${{ github.workspace }}/common/utils"
         run: uv run pytest
 
   build-workers:

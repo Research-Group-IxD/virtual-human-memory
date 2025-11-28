@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topic-creator
+  namespace: vhm
+spec:
+  template:
+    spec:
+      containers:
+        - name: kafka-topic-creator
+          image: bitnami/kafka:3.7
+          command:
+            - '/bin/sh'
+            - '-c'
+            - |
+              echo "Waiting for Kafka to be ready..."
+              until kafka-topics.sh --bootstrap-server kafka-service:9092 --list; do
+                echo "Kafka not ready yet, sleeping..."
+                sleep 5
+              done
+              
+              echo "Kafka is ready. Creating topics..."
+              
+              kafka-topics.sh --bootstrap-server kafka-service:9092 --create --if-not-exists --topic anchors-write --partitions 1 --replication-factor 1
+              kafka-topics.sh --bootstrap-server kafka-service:9092 --create --if-not-exists --topic recall-request --partitions 1 --replication-factor 1
+              kafka-topics.sh --bootstrap-server kafka-service:9092 --create --if-not-exists --topic recall-response --partitions 1 --replication-factor 1
+              
+              echo "Topics created successfully."
+      restartPolicy: OnFailure

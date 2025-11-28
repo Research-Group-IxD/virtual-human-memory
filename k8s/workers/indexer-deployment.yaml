@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indexer
+  namespace: vhm
+  labels:
+    app: indexer
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: indexer
+  template:
+    metadata:
+      labels:
+        app: indexer
+        component: worker
+    spec:
+      containers:
+      - name: indexer
+        image: ghcr.io/Research-Group-IxD/vhm-indexer:0.1.1
+        imagePullPolicy: IfNotPresent
+        # The command is now handled by the Dockerfile's CMD
+        # command: ["/bin/sh", "-c", "echo 'Indexer worker - update with actual image'; sleep infinity"]
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: vhm-config
+              key: KAFKA_BOOTSTRAP_SERVERS
+        - name: QDRANT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: vhm-config
+              key: QDRANT_URL
+        - name: QDRANT_COLLECTION
+          valueFrom:
+            configMapKeyRef:
+              name: vhm-config
+              key: QDRANT_COLLECTION
+        - name: EMBEDDING_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: vhm-config
+              key: EMBEDDING_MODEL
+        - name: OLLAMA_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: vhm-config
+              key: OLLAMA_BASE_URL
+        - name: PORTKEY_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: vhm-config
+              key: PORTKEY_BASE_URL
+        - name: PORTKEY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: vhm-secrets
+              key: PORTKEY_API_KEY
+              optional: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+

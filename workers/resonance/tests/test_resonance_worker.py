@@ -9,10 +9,17 @@ import pytest
 
 def ensure_repository_on_path() -> None:
     """Make sure the project root is importable during CI runs."""
-    project_root = Path(__file__).resolve().parents[2]
-    root_str = str(project_root)
-    if root_str not in sys.path:
-        sys.path.insert(0, root_str)
+    current = Path(__file__).resolve()
+    for candidate in current.parents:
+        if (candidate / "pyproject.toml").exists():
+            root_str = str(candidate)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+            return
+    # Fallback for unusual layouts: add the grandparent directory.
+    fallback = str(current.parents[2])
+    if fallback not in sys.path:
+        sys.path.insert(0, fallback)
 
 
 ensure_repository_on_path()

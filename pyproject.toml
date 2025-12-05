@@ -12,6 +12,7 @@ dependencies = [
     "litellm",
     "portkey-ai",
     "pydantic>=2.6.1",
+    "pydantic-settings>=2.0.0",
     "python-dateutil==2.9.0.post0",
     "uvicorn",
     "fastapi",

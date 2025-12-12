@@ -120,4 +120,18 @@ docker build -f docker/worker.Dockerfile \
   -t vhm-indexer:test .
 ```
 
+## Testing
+
+This project includes a comprehensive test suite for the indexer worker, with unit and integration tests. Tests can be run using pytest:
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run indexer tests specifically
+uv run pytest workers/indexer/tests/ -v
+```
+
+For detailed information about the test structure, how to navigate tests, and best practices, see the [Test Guide](./TEST_GUIDE.md).
+
 For detailed information about the project's architecture, research goals, and results, please see our [full project page](https://research-group-ixd.github.io/virtual-human-memory/).

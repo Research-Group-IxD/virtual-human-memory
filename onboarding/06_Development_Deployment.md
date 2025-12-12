@@ -52,7 +52,20 @@ If you want to quickly check code without spinning up the entire cluster:
 
 ```bash
 uv sync
-uv run pytest  # placeholder smoke tests live in common/utils/tests and each worker package
+uv run pytest  # Comprehensive test suite with unit and integration tests
+```
+
+You can run specific test suites:
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run indexer tests specifically
+uv run pytest workers/indexer/tests/ -v
+
+# Run tests for a specific worker
+uv run pytest -k resonance
 ```
 
 You can also run individual modules directly, for example:
@@ -62,6 +75,8 @@ uv run python -m workers.vhm_indexer.main --help
 ```
 
 This bypasses Kafka/Qdrant orchestration but lets you smoke-test imports and CLI behaviour.
+
+For detailed information about the test structure, see the [Test Guide](../TEST_GUIDE.md).
 
 ## 7. Deployment Guide (Migrating to Kubernetes)
 

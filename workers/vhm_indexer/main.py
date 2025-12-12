@@ -160,8 +160,14 @@ def main():
             
             payload_str = msg.value().decode("utf-8")
             try:
-                # Parse JSON and validate with Pydantic
+                # Parse JSON first
                 payload = json.loads(payload_str)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON message: {e}")
+                continue
+            
+            try:
+                # Validate with Pydantic
                 anchor = Anchor.model_validate(payload)
                 
                 # Process the anchor
@@ -180,7 +186,7 @@ def main():
                     
             except ValidationError as e:
                 # Handle Pydantic validation errors
-                payload = json.loads(payload_str)
+                # payload is already parsed from json.loads() above, so we can safely use it
                 error_msg = {
                     "anchor_id": payload.get("anchor_id", "unknown"),
                     "ok": False,

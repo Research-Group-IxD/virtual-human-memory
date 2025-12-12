@@ -36,7 +36,51 @@ export QDRANT_COLLECTION=anchors
 export EMBEDDING_MODEL=deterministic  # or ollama:bge-m3, etc.
 ```
 
-### Running Locally
+### Starting Services
+
+The demo will check service connectivity and show helpful error messages if services aren't available. Here are the recommended ways to start services:
+
+#### Option 1: Using Minikube (Recommended for Full System)
+
+This is the recommended approach if you want to run the complete system:
+
+```bash
+# 1. Start Minikube cluster
+./k8s/scripts/setup-cluster.sh
+
+# 2. Deploy infrastructure (Kafka and Qdrant)
+kubectl apply -f k8s/infrastructure/
+
+# 3. Wait for services to be ready
+kubectl wait --for=condition=ready pod -l app=kafka -n vhm --timeout=300s
+kubectl wait --for=condition=ready pod -l app=qdrant -n vhm --timeout=300s
+
+# 4. Port-forward services to localhost (in separate terminals)
+kubectl port-forward -n vhm svc/kafka-service 9092:9092
+kubectl port-forward -n vhm svc/qdrant-service 6333:6333
+
+# 5. Deploy workers (optional, for full functionality)
+kubectl apply -f k8s/workers/
+```
+
+#### Option 2: Using Docker (Quick Start for Demo)
+
+For just testing the demo, you can run services with Docker:
+
+```bash
+# Start Qdrant
+docker run -d -p 6333:6333 --name qdrant qdrant/qdrant:latest
+
+# Start Kafka (requires Docker Compose or manual setup)
+# If you have docker-compose.yml:
+docker compose up -d kafka
+```
+
+#### Option 3: Local Installation
+
+Install and run Kafka and Qdrant locally on your machine.
+
+### Running the Demo
 
 1. Install dependencies (if not already done):
 ```bash
@@ -49,6 +93,8 @@ uv run streamlit run tools/demo/indexer_demo.py
 ```
 
 3. Open your browser to: http://localhost:8501
+
+4. **Check Service Status**: The sidebar will show connection status for Kafka and Qdrant. If services aren't connected, expand the error messages for setup instructions.
 
 ## Usage Guide
 

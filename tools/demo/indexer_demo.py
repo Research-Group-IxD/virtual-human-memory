@@ -35,6 +35,32 @@ from vhm_common_utils.embedding import (
 )
 
 
+def _check_kafka_connection() -> tuple[bool, str]:
+    """Check if Kafka is accessible."""
+    try:
+        producer = Producer({
+            "bootstrap.servers": KAFKA_BOOTSTRAP,
+            "socket.timeout.ms": 2000,  # 2 second timeout
+        })
+        # Try to get metadata (this will fail if Kafka is not reachable)
+        producer.list_topics(timeout=2)
+        producer.close()
+        return True, "Connected"
+    except Exception as e:
+        return False, str(e)
+
+
+def _check_qdrant_connection() -> tuple[bool, str]:
+    """Check if Qdrant is accessible."""
+    try:
+        client = QdrantClient(url=QDRANT_URL, timeout=2)
+        # Try to get collections (this will fail if Qdrant is not reachable)
+        client.get_collections()
+        return True, "Connected"
+    except Exception as e:
+        return False, str(e)
+
+
 def _init_state():
     """Initialize session state variables."""
     if "anchors_sent" not in st.session_state:
@@ -51,6 +77,12 @@ def _init_state():
         st.session_state.time_offset = dt.timedelta(0)
     if "recall_results" not in st.session_state:
         st.session_state.recall_results = []
+    # Check service connections
+    if "service_checks" not in st.session_state:
+        st.session_state.service_checks = {
+            "kafka": _check_kafka_connection(),
+            "qdrant": _check_qdrant_connection(),
+        }
 
 
 def _format_timestamp(ts: dt.datetime | str) -> str:
@@ -258,9 +290,96 @@ def main():
         "Test and visualize how the Indexer service processes memory anchors"
     )
     
+    # Check service status and show warnings
+    kafka_ok, kafka_msg = st.session_state.service_checks.get("kafka", (False, ""))
+    qdrant_ok, qdrant_msg = st.session_state.service_checks.get("qdrant", (False, ""))
+    
+    if not kafka_ok or not qdrant_ok:
+        with st.container():
+            st.warning("⚠️ **Services Not Available**")
+            if not kafka_ok:
+                st.error(f"**Kafka** is not connected to `{KAFKA_BOOTSTRAP}`")
+            if not qdrant_ok:
+                st.error(f"**Qdrant** is not connected to `{QDRANT_URL}`")
+            st.info("💡 Check the sidebar for connection status and setup instructions.")
+            st.divider()
+    
     # Sidebar: Configuration
     with st.sidebar:
         st.header("⚙️ Configuration")
+        
+        # Service Status
+        st.subheader("🔌 Service Status")
+        
+        # Check Kafka
+        kafka_ok, kafka_msg = _check_kafka_connection()
+        if kafka_ok:
+            st.success(f"✅ Kafka: `{KAFKA_BOOTSTRAP}`")
+        else:
+            st.error(f"❌ Kafka: Not connected")
+            with st.expander("Kafka Connection Error", expanded=True):
+                st.code(kafka_msg, language="text")
+                st.markdown("""
+                **To start Kafka:**
+                
+                **Option 1: Using Minikube (Recommended)**
+                ```bash
+                # Start Minikube cluster
+                ./k8s/scripts/setup-cluster.sh
+                
+                # Deploy infrastructure
+                kubectl apply -f k8s/infrastructure/
+                
+                # Port-forward Kafka to localhost
+                kubectl port-forward -n vhm svc/kafka-service 9092:9092
+                ```
+                
+                **Option 2: Using Docker Compose**
+                ```bash
+                # If you have docker-compose.yml
+                docker compose up -d kafka
+                ```
+                
+                **Option 3: Local Kafka Installation**
+                - Install and start Kafka locally
+                - Ensure it's running on `localhost:9092`
+                """)
+        
+        # Check Qdrant
+        qdrant_ok, qdrant_msg = _check_qdrant_connection()
+        if qdrant_ok:
+            st.success(f"✅ Qdrant: `{QDRANT_URL}`")
+        else:
+            st.error(f"❌ Qdrant: Not connected")
+            with st.expander("Qdrant Connection Error", expanded=True):
+                st.code(qdrant_msg, language="text")
+                st.markdown("""
+                **To start Qdrant:**
+                
+                **Option 1: Using Minikube (Recommended)**
+                ```bash
+                # Start Minikube cluster
+                ./k8s/scripts/setup-cluster.sh
+                
+                # Deploy infrastructure
+                kubectl apply -f k8s/infrastructure/
+                
+                # Port-forward Qdrant to localhost
+                kubectl port-forward -n vhm svc/qdrant-service 6333:6333
+                ```
+                
+                **Option 2: Using Docker**
+                ```bash
+                docker run -p 6333:6333 qdrant/qdrant:latest
+                ```
+                
+                **Option 3: Local Qdrant Installation**
+                - Install and start Qdrant locally
+                - Ensure it's running on `http://localhost:6333`
+                """)
+        
+        st.divider()
+        
         st.info(f"**Kafka**: `{KAFKA_BOOTSTRAP}`\n\n**Qdrant**: `{QDRANT_URL}`\n\n**Collection**: `{QDRANT_COLLECTION}`")
         
         embedding_model = st.text_input(
@@ -270,12 +389,17 @@ def main():
         )
         st.session_state.embedding_model = embedding_model
         
-        if st.button("🔄 Refresh Qdrant Connection"):
+        if st.button("🔄 Refresh Connections"):
+            st.session_state.service_checks = {
+                "kafka": _check_kafka_connection(),
+                "qdrant": _check_qdrant_connection(),
+            }
             try:
                 st.session_state.qdrant_client = QdrantClient(url=QDRANT_URL)
-                st.success("Connected to Qdrant!")
+                st.success("Refreshed connections!")
             except Exception as e:
-                st.error(f"Connection failed: {e}")
+                st.warning(f"Qdrant connection failed: {e}")
+            st.rerun()
         
         st.divider()
         
@@ -345,7 +469,12 @@ def main():
                 help="Optional tags for categorization",
             )
         
-        if st.button("🚀 Send Anchor to Indexer", type="primary"):
+        # Check service status before allowing actions
+        kafka_ok, _ = st.session_state.service_checks.get("kafka", (False, ""))
+        if not kafka_ok:
+            st.warning("⚠️ Kafka is not connected. Please start Kafka and refresh connections in the sidebar.")
+        
+        if st.button("🚀 Send Anchor to Indexer", type="primary", disabled=not kafka_ok):
             if not anchor_text.strip():
                 st.error("Please enter anchor text!")
             else:

@@ -134,4 +134,41 @@ uv run pytest workers/indexer/tests/ -v
 
 For detailed information about the test structure, how to navigate tests, and best practices, see the [Test Guide](./TEST_GUIDE.md).
 
+## Tools & Demos
+
+This repository includes several tools and demo applications for testing and demonstrating the system:
+
+### Interactive Demo (Streamlit)
+
+The **Indexer Service Demo** provides a visual interface to test and explore the memory system:
+
+```bash
+uv run streamlit run tools/demo/indexer_demo.py
+```
+
+Features:
+- Create and send memory anchors
+- Visualize the complete processing flow (Kafka → Indexer → Qdrant)
+- Inspect stored anchors and their embeddings
+- Simulate time passing and test recall with temporal decay
+
+See [tools/demo/README.md](./tools/demo/README.md) for detailed usage instructions.
+
+### End-to-End Demo Script
+
+The **Three Retells Demo** tests the complete pipeline from anchor creation to narrative generation:
+
+```bash
+uv run python tools/demo_three_retells.py
+```
+
+This script:
+1. Seeds three memory anchors with different timestamps
+2. Sends a recall request
+3. Waits for resonance beats
+4. Waits for retelling
+5. Logs everything to a JSON file
+
+See [tools/README.md](./tools/README.md) for more information about available tools.
+
 For detailed information about the project's architecture, research goals, and results, please see our [full project page](https://research-group-ixd.github.io/virtual-human-memory/).

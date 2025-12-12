@@ -18,6 +18,7 @@ from qdrant_client.http.models import ScoredPoint
 from vhm_common_utils.data_models import RecallRequest, RecallResponse, ResonanceBeat
 from vhm_common_utils.embedding import get_embedding, human_age
 from vhm_common_utils.health import run_health_check_server
+from vhm_common_utils.version import get_version
 from workers.vhm_resonance.config import ResonanceSettings
 
 
@@ -344,6 +345,8 @@ class ResonanceWorker:
 
 def main() -> None:
     configure_logging()
+    __version__ = get_version("resonance")
+    logging.info(f"Starting resonance worker version {__version__}")
     run_health_check_server()
     settings = ResonanceSettings.from_env()
     worker = ResonanceWorker(

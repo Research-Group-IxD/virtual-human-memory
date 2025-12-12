@@ -17,6 +17,7 @@ from vhm_common_utils.config import (
     PORTKEY_MODEL,
 )
 from vhm_common_utils.health import run_health_check_server
+from vhm_common_utils.version import get_version
 
 
 TOP_IN = "recall-response"
@@ -289,6 +290,8 @@ def build_narrative_guidance(beats: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def main():
+    __version__ = get_version("reteller")
+    print(f"[reteller] Starting reteller worker version {__version__}")
     # Start the health check server in a background thread
     run_health_check_server()
 

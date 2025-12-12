@@ -45,7 +45,9 @@ The demo will check service connectivity and show helpful error messages if serv
 This is the recommended approach if you want to run the complete system:
 
 ```bash
-# 1. Start Minikube cluster
+# 1. Check if Minikube is running, or start it
+minikube status
+# If not running:
 ./k8s/scripts/setup-cluster.sh
 
 # 2. Deploy infrastructure (Kafka and Qdrant)
@@ -55,13 +57,22 @@ kubectl apply -f k8s/infrastructure/
 kubectl wait --for=condition=ready pod -l app=kafka -n vhm --timeout=300s
 kubectl wait --for=condition=ready pod -l app=qdrant -n vhm --timeout=300s
 
-# 4. Port-forward services to localhost (in separate terminals)
+# 4. Port-forward services to localhost
+# IMPORTANT: Run these in separate terminal windows/tabs and keep them running
+# Terminal 1: Kafka
 kubectl port-forward -n vhm svc/kafka-service 9092:9092
+
+# Terminal 2: Qdrant
 kubectl port-forward -n vhm svc/qdrant-service 6333:6333
 
 # 5. Deploy workers (optional, for full functionality)
 kubectl apply -f k8s/workers/
 ```
+
+**Important Notes:**
+- The `kubectl port-forward` commands must stay running in separate terminals
+- If you close a terminal, the port-forward stops and you'll lose connectivity
+- To verify services are accessible: `lsof -i :9092` and `lsof -i :6333`
 
 #### Option 2: Using Docker (Quick Start for Demo)
 

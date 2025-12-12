@@ -15,6 +15,7 @@ from vhm_common_utils.config import (
 from vhm_common_utils.data_models import Anchor
 from vhm_common_utils.embedding import get_embedding, get_embedding_dim
 from vhm_common_utils.health import run_health_check_server
+from vhm_common_utils.version import get_version
 
 # Configure logging
 logging.basicConfig(
@@ -127,6 +128,9 @@ def process_anchor(
 
 def main():
     """Main entry point for the indexer worker."""
+    __version__ = get_version("indexer")
+    logger.info(f"Starting indexer worker version {__version__}")
+    
     # Start the health check server in a background thread
     run_health_check_server()
 

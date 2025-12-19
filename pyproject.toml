@@ -36,11 +36,6 @@ dependencies = [
     "pandas>=2.0.0",
 ]
 
-[tool.vhm.versions]
-indexer = "0.1.1"
-resonance = "0.1.0"
-reteller = "0.1.0"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

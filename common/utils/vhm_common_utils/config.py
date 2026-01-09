@@ -68,6 +68,8 @@ INDEXER_KAFKA_RETRY_BACKOFF_SECONDS = _read_env(
 INDEXER_SHUTDOWN_TIMEOUT_SECONDS = _read_env(
     "INDEXER_SHUTDOWN_TIMEOUT_SECONDS", transform=float, default=10.0
 )
+INDEXER_LOG_LEVEL = _read_env("INDEXER_LOG_LEVEL", default="INFO")
+INDEXER_LOG_JSON = _read_env("INDEXER_LOG_JSON", transform=lambda x: x.lower() == "true", default=False)
 
 # Embedding dimensions by model
 EMBEDDING_DIMS = {

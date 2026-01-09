@@ -1,0 +1,16 @@
+{
+    "include": [
+      "**/*.py"
+    ],
+    "exclude": [
+      "**/__pycache__",
+      "**/.venv",
+      "**/node_modules"
+    ],
+    "extraPaths": [
+      "common/utils",
+      "workers"
+    ],
+    "pythonVersion": "3.12",
+    "typeCheckingMode": "basic"
+  }

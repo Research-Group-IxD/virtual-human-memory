@@ -136,3 +136,97 @@ def test_anchor_exists_qdrant_error(mock_qdrant_client, caplog):
     assert result is False
     assert "failed to check existing anchor" in caplog.text.lower()
 
+
+# Test retry logic for anchor_exists
+@patch("workers.vhm_indexer.main.time.sleep")
+def test_anchor_exists_with_retry_success(mock_sleep, mock_qdrant_client, caplog):
+    """Test that anchor_exists() retries on failure and succeeds on retry."""
+    # First call fails, second call succeeds
+    mock_qdrant_client.retrieve.side_effect = [
+        Exception("Temporary connection error"),
+        [Mock()],  # Success on retry
+    ]
+
+    result = anchor_exists(mock_qdrant_client, "test-id")
+
+    assert result is True
+    assert mock_qdrant_client.retrieve.call_count == 2
+    assert mock_sleep.called  # Verify backoff was used
+    assert "retrying" in caplog.text.lower()
+
+
+@patch("workers.vhm_indexer.main.time.sleep")
+@patch("workers.vhm_indexer.main.INDEXER_QDRANT_RETRIES", 2)
+def test_anchor_exists_with_retry_exhausted(mock_sleep, mock_qdrant_client, caplog):
+    """Test that anchor_exists() returns False after all retries are exhausted."""
+    # All attempts fail
+    mock_qdrant_client.retrieve.side_effect = Exception("Persistent connection error")
+
+    result = anchor_exists(mock_qdrant_client, "test-id")
+
+    assert result is False
+    # Should have tried 3 times (1 initial + 2 retries)
+    assert mock_qdrant_client.retrieve.call_count == 3
+    assert mock_sleep.call_count == 2  # Backoff called twice
+    assert "after retries" in caplog.text.lower()
+
+
+# Test retry logic for process_anchor
+@patch("workers.vhm_indexer.main.time.sleep")
+def test_process_anchor_qdrant_retry_success(
+    mock_sleep, mock_qdrant_client, mock_get_embedding, sample_anchor
+):
+    """Test that process_anchor() retries Qdrant upsert on failure."""
+    # Setup: anchor doesn't exist
+    mock_qdrant_client.retrieve.return_value = []
+    # First upsert fails, second succeeds
+    mock_qdrant_client.upsert.side_effect = [
+        Exception("Temporary Qdrant error"),
+        None,  # Success on retry
+    ]
+
+    result = process_anchor(sample_anchor, mock_qdrant_client, mock_get_embedding)
+
+    assert result["ok"] is True
+    assert mock_qdrant_client.upsert.call_count == 2
+    assert mock_sleep.called  # Verify backoff was used
+
+
+@patch("workers.vhm_indexer.main.time.sleep")
+@patch("workers.vhm_indexer.main.INDEXER_QDRANT_RETRIES", 2)
+def test_process_anchor_qdrant_retry_failure(
+    mock_sleep, mock_qdrant_client, mock_get_embedding, sample_anchor, caplog
+):
+    """Test that process_anchor() returns error after retries exhausted."""
+    # Setup: anchor doesn't exist
+    mock_qdrant_client.retrieve.return_value = []
+    # All upsert attempts fail
+    mock_qdrant_client.upsert.side_effect = Exception("Persistent Qdrant error")
+
+    result = process_anchor(sample_anchor, mock_qdrant_client, mock_get_embedding)
+
+    assert result["ok"] is False
+    assert result["reason"] == "qdrant_storage_failed"
+    assert "detail" in result
+    # Should have tried 3 times (1 initial + 2 retries)
+    assert mock_qdrant_client.upsert.call_count == 3
+    assert mock_sleep.call_count == 2  # Backoff called twice
+
+
+def test_process_anchor_embedding_failure(
+    mock_qdrant_client, sample_anchor, caplog
+):
+    """Test that embedding generation failures are handled correctly."""
+    # Setup: anchor doesn't exist
+    mock_qdrant_client.retrieve.return_value = []
+    # Embedding generation fails
+    def failing_embedding(text):
+        raise Exception("Embedding service unavailable")
+
+    result = process_anchor(sample_anchor, mock_qdrant_client, failing_embedding)
+
+    assert result["ok"] is False
+    assert result["reason"] == "embedding_generation_failed"
+    assert "detail" in result
+    mock_qdrant_client.upsert.assert_not_called()  # Should not try to store
+

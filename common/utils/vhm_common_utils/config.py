@@ -56,6 +56,21 @@ RESONANCE_DIVERSITY_THRESHOLD = _read_env(
     "RESONANCE_DIVERSITY_THRESHOLD", transform=float, default=0.85
 )
 
+# Indexer Worker Configuration
+INDEXER_QDRANT_RETRIES = _read_env("INDEXER_QDRANT_RETRIES", transform=int, default=3)
+INDEXER_QDRANT_RETRY_BACKOFF_SECONDS = _read_env(
+    "INDEXER_QDRANT_RETRY_BACKOFF_SECONDS", transform=float, default=0.25
+)
+INDEXER_KAFKA_RETRIES = _read_env("INDEXER_KAFKA_RETRIES", transform=int, default=3)
+INDEXER_KAFKA_RETRY_BACKOFF_SECONDS = _read_env(
+    "INDEXER_KAFKA_RETRY_BACKOFF_SECONDS", transform=float, default=0.5
+)
+INDEXER_SHUTDOWN_TIMEOUT_SECONDS = _read_env(
+    "INDEXER_SHUTDOWN_TIMEOUT_SECONDS", transform=float, default=10.0
+)
+INDEXER_LOG_LEVEL = _read_env("INDEXER_LOG_LEVEL", default="INFO")
+INDEXER_LOG_JSON = _read_env("INDEXER_LOG_JSON", transform=lambda x: x.lower() == "true", default=False)
+
 # Embedding dimensions by model
 EMBEDDING_DIMS = {
     "deterministic": 384,

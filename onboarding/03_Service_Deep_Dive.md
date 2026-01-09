@@ -22,6 +22,7 @@ The system's logic is distributed across three independent, containerized Python
     *   The full original JSON message as the payload (containing the text, timestamp, salience, etc.).
 5.  **Handles Model Changes**: A key feature is the `ensure_collection` function. On startup, the Indexer checks if the Qdrant collection's vector dimensions match the dimensions of the currently configured embedding model. If they don't (e.g., switching from a 768-dim model to a 1024-dim model), it automatically deletes and recreates the collection. This allows for seamless model upgrades without manual intervention.
 6.  **Publishes Confirmation**: Once the memory is successfully stored, it publishes a confirmation message to the `anchors-indexed` topic.
+7.  **Production Readiness**: The Indexer includes retry logic with exponential backoff for both Qdrant and Kafka operations, ensuring memories aren't lost on temporary network issues. It also implements graceful shutdown handling (SIGTERM/SIGINT) to prevent data loss during deployments, and uses manual Kafka commits to ensure messages are only acknowledged after successful processing.
 
 #### Kubernetes Considerations:
 

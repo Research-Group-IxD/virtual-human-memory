@@ -4,14 +4,14 @@ version = "0.1.2"
 description = "A professional-grade, Kubernetes-native narrative memory system for conversational AI."
 requires-python = ">=3.12.0,<3.13.0"
 dependencies = [
-    # These are now in the worker's pyproject.toml
-    # "qdrant-client>=1.9.2",
-    # "confluent-kafka==2.4.0",
-
     # Common dependencies that might be used by multiple services or for local dev
+    # Note: qdrant-client and confluent-kafka are needed for tests and local development
+    "qdrant-client>=1.9.2",
+    "confluent-kafka==2.4.0",
     "litellm",
     "portkey-ai",
     "pydantic>=2.6.1",
+    "pydantic-settings>=2.0.0",
     "python-dateutil==2.9.0.post0",
     "uvicorn",
     "fastapi",
@@ -31,6 +31,9 @@ dependencies = [
     "annotated-types>=0.7.0",
     "typing-inspection>=0.4.2",
     "pytest>=8.3.0",
+    "toml",
+    "streamlit>=1.28.0",
+    "pandas>=2.0.0",
 ]
 
 [build-system]

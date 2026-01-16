@@ -15,4 +15,22 @@ For Kafka topic initialization we now rely on the declarative `k8s/infrastructur
 
 ## 9. Tools
 
-Legacy Docker Compose tooling has been retired in favour of Kubernetes-native workflows. The most up-to-date operational guide is the [Minikube Worker Recovery Guide](../minikube-worker-recovery.md), which documents the diagnostic steps and commands we use today. Future visualization or demo tools will live directly inside this monorepo (for example under a `tools/` directory or in dedicated Notebooks), but the old `convai_narrative_memory_poc` helpers are no longer part of this codebase.
+The `tools/` directory contains utility scripts and demo applications for testing and demonstrating the VHM system.
+
+### Available Tools
+
+*   **`tools/demo/indexer_demo.py`** (Streamlit)
+    *   **Purpose**: Interactive visual interface for testing and exploring the Indexer service. Provides real-time visualization of the complete memory processing flow, from anchor creation through indexing to Qdrant storage.
+    *   **Usage**: `uv run streamlit run tools/demo/indexer_demo.py`
+    *   **See**: [tools/demo/README.md](../tools/demo/README.md) for detailed documentation
+
+*   **`tools/demo_three_retells.py`**
+    *   **Purpose**: End-to-end demonstration script that tests the complete pipeline: seeds three memory anchors with different timestamps, sends a recall request, waits for resonance beats, and waits for retelling. Logs the complete flow to JSON.
+    *   **Usage**: `uv run python tools/demo_three_retells.py`
+    *   **See**: [tools/README.md](../tools/README.md) for more information
+
+### Operational Tools
+
+For operational diagnostics and troubleshooting, see the [Minikube Worker Recovery Guide](../minikube-worker-recovery.md), which documents the diagnostic steps and commands we use today.
+
+Legacy Docker Compose tooling has been retired in favour of Kubernetes-native workflows. The old `convai_narrative_memory_poc` helpers are no longer part of this codebase.

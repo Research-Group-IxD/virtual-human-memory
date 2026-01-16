@@ -4,10 +4,16 @@ from uuid import UUID, uuid4
 
 
 class Anchor(BaseModel):
-    anchor_id: UUID = Field(default_factory=uuid4)
-    text: str
-    stored_at: datetime = Field(default_factory=datetime.utcnow)
-    salience: float = 1.0
+    """Anchor model for memory anchors stored in Qdrant.
+    
+    Used by the indexer worker to validate incoming anchor data from Kafka.
+    All fields are required when receiving from Kafka (no defaults).
+    """
+    anchor_id: UUID
+    text: str = Field(..., min_length=1, max_length=10000)
+    stored_at: datetime
+    salience: float = Field(default=1.0, ge=0.3, le=2.5)
+    meta: dict = Field(default_factory=dict)
 
 
 class RecallRequest(BaseModel):

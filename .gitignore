@@ -5,3 +5,7 @@ __pycache__/
 venv/
 *.pyc
 .pytest_cache/
+
+# Temporary documentation files
+BRANCH_OVERVIEW.md
+.obsidian

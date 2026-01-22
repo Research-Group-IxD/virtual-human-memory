@@ -5,9 +5,9 @@ These tests test the interaction between components,
 with mocked external dependencies (Qdrant, Kafka).
 """
 import pytest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
-from workers.vhm_indexer.main import process_anchor
+from workers.vhm_indexer.main import process_anchor, _publish_to_kafka_with_retry
 
 
 def test_indexer_full_flow_success(
@@ -62,4 +62,63 @@ def test_indexer_immutability_enforcement_flow(
     assert result["ok"] is False
     assert result["reason"] == "anchor_immutable_violation"
     assert "detail" in result
+
+
+# Test Kafka producer retry logic
+@patch("workers.vhm_indexer.main.time.sleep")
+def test_kafka_producer_retry_success(mock_sleep, mock_qdrant_client, mock_get_embedding, sample_anchor):
+    """Test Kafka producer retry logic in full flow."""
+    from confluent_kafka import Producer
+    
+    # Setup: anchor doesn't exist
+    mock_qdrant_client.retrieve.return_value = []
+    
+    # Create a mock producer
+    mock_producer = MagicMock(spec=Producer)
+    # First flush fails, second succeeds
+    mock_producer.flush.side_effect = [
+        Exception("Kafka temporary error"),
+        None,  # Success on retry
+    ]
+    
+    # Process anchor successfully
+    result = process_anchor(sample_anchor, mock_qdrant_client, mock_get_embedding)
+    assert result["ok"] is True
+    
+    # Test publishing with retry
+    message = b'{"ok": true, "anchor_id": "test-id"}'
+    success = _publish_to_kafka_with_retry(mock_producer, "test-topic", message)
+    
+    assert success is True
+    assert mock_producer.produce.call_count == 2  # Called twice (retry)
+    assert mock_producer.flush.call_count == 2
+    assert mock_sleep.called  # Verify backoff was used
+
+
+@patch("workers.vhm_indexer.main.time.sleep")
+@patch("workers.vhm_indexer.main.INDEXER_KAFKA_RETRIES", 2)
+def test_kafka_producer_retry_failure(mock_sleep, mock_qdrant_client, mock_get_embedding, sample_anchor, caplog):
+    """Test that message is not committed if Kafka publish fails after retries."""
+    from confluent_kafka import Producer
+    
+    # Setup: anchor doesn't exist
+    mock_qdrant_client.retrieve.return_value = []
+    
+    # Create a mock producer that always fails
+    mock_producer = MagicMock(spec=Producer)
+    mock_producer.flush.side_effect = Exception("Persistent Kafka error")
+    
+    # Process anchor successfully
+    result = process_anchor(sample_anchor, mock_qdrant_client, mock_get_embedding)
+    assert result["ok"] is True
+    
+    # Test publishing with retry - should fail after all retries
+    message = b'{"ok": true, "anchor_id": "test-id"}'
+    success = _publish_to_kafka_with_retry(mock_producer, "test-topic", message)
+    
+    assert success is False
+    # Should have tried 3 times (1 initial + 2 retries)
+    assert mock_producer.flush.call_count == 3
+    assert mock_sleep.call_count == 2  # Backoff called twice
+    assert "Failed to publish to Kafka after" in caplog.text
 

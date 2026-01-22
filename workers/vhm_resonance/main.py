@@ -189,6 +189,7 @@ class ResonanceWorker:
                 extra={"payload": msg.value().decode("utf-8", errors="ignore")},
             )
             logger.debug("Validation details: %s", err)
+            self._commit_message(msg, reason="validation_failed")
             return
 
         try:
@@ -204,22 +205,18 @@ class ResonanceWorker:
             )
             return
 
-        try:
-            payload_bytes = json.dumps(response.model_dump(mode="json")).encode("utf-8")
-            self.producer.produce(self.settings.kafka_topic_out, payload_bytes)
-            self.producer.flush(self.settings.producer_flush_timeout_seconds)
-            logger.info(
-                "Published recall response",
-                extra={
-                    "request_id": str(response.request_id),
-                    "beats": len(response.beats),
-                },
-            )
-        except Exception:
-            logger.exception(
-                "Failed to publish recall response",
-                extra={"request_id": str(response.request_id)},
-            )
+        payload_bytes = json.dumps(response.model_dump(mode="json")).encode("utf-8")
+        if not self._publish_response_with_retry(payload_bytes, response.request_id):
+            return
+
+        self._commit_message(msg, reason="published")
+        logger.info(
+            "Published recall response",
+            extra={
+                "request_id": str(response.request_id),
+                "beats": len(response.beats),
+            },
+        )
 
     def _process_request(self, request: RecallRequest) -> RecallResponse:
         request_now = normalize_datetime(request.now)
@@ -242,6 +239,56 @@ class ResonanceWorker:
 
         beats = [self._build_beat(act, hit, request_now) for act, hit in selected]
         return RecallResponse(request_id=request.request_id, beats=beats)
+
+    def _publish_response_with_retry(self, payload: bytes, request_id) -> bool:
+        attempts = self.settings.kafka_publish_retries + 1
+        for attempt in range(1, attempts + 1):
+            try:
+                self.producer.produce(self.settings.kafka_topic_out, payload)
+                self.producer.flush(self.settings.producer_flush_timeout_seconds)
+                return True
+            except Exception as exc:  # noqa: BLE001 - want to log and retry
+                backoff = self.settings.kafka_publish_retry_backoff_seconds * attempt
+                logger.warning(
+                    "Kafka publish failed, retrying",
+                    extra={
+                        "request_id": str(request_id),
+                        "attempt": attempt,
+                        "max_attempts": attempts,
+                        "backoff_seconds": backoff,
+                        "error": str(exc),
+                    },
+                )
+                if attempt >= attempts:
+                    logger.exception(
+                        "Failed to publish recall response after retries",
+                        extra={"request_id": str(request_id)},
+                    )
+                    return False
+                if backoff > 0:
+                    time.sleep(backoff)
+        return False
+
+    def _commit_message(self, msg: Message, reason: str) -> None:
+        try:
+            self.consumer.commit(message=msg)
+            logger.debug(
+                "Committed message",
+                extra={
+                    "reason": reason,
+                    "partition": msg.partition(),
+                    "offset": msg.offset(),
+                },
+            )
+        except Exception:
+            logger.exception(
+                "Failed to commit message",
+                extra={
+                    "reason": reason,
+                    "partition": msg.partition(),
+                    "offset": msg.offset(),
+                },
+            )
 
     def _search_with_retry(
         self, query_vector: Sequence[float], top_k: int

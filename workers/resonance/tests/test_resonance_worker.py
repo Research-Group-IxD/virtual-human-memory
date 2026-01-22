@@ -176,3 +176,53 @@ def test_process_request_returns_ranked_beats():
     assert response.beats[0].activation > response.beats[1].activation
     assert response.beats[0].perceived_age == "yesterday"
     assert response.beats[1].perceived_age in {"1 months ago", "1 month ago"}
+
+
+def test_consumer_config_disables_auto_commit():
+    settings = ResonanceSettings()
+    assert settings.consumer_config["enable.auto.commit"] is False
+
+
+def test_publish_retry_success(monkeypatch):
+    settings = ResonanceSettings(
+        kafka_publish_retries=1, kafka_publish_retry_backoff_seconds=0.01
+    )
+    producer = MagicMock()
+    producer.flush.side_effect = [Exception("temp"), None]
+    worker = ResonanceWorker(
+        settings=settings,
+        client=MagicMock(),
+        consumer=MagicMock(),
+        producer=producer,
+    )
+
+    monkeypatch.setattr("workers.vhm_resonance.main.time.sleep", lambda _: None)
+    ok = worker._publish_response_with_retry(b"payload", "req-1")
+
+    assert ok is True
+    assert producer.produce.call_count == 2
+    assert producer.flush.call_count == 2
+
+
+def test_handle_message_commits_on_validation_error():
+    class StubMessage:
+        def value(self):
+            return b'{"bad":"payload"}'
+
+        def partition(self):
+            return 0
+
+        def offset(self):
+            return 7
+
+    consumer = MagicMock()
+    worker = ResonanceWorker(
+        settings=ResonanceSettings(),
+        client=MagicMock(),
+        consumer=consumer,
+        producer=MagicMock(),
+    )
+
+    worker._handle_message(StubMessage())
+
+    consumer.commit.assert_called_once()

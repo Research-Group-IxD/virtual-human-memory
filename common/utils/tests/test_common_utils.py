@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import importlib
-import os
 from datetime import datetime, timezone
 
 from vhm_common_utils import config as config_module
@@ -36,13 +35,16 @@ def test_recall_request_defaults_are_valid():
 
 
 def test_config_reads_env_overrides(monkeypatch):
-    monkeypatch.setenv("QDRANT_URL", "http://qdrant-test:6333")
-    monkeypatch.setenv("INDEXER_KAFKA_RETRIES", "5")
+    with monkeypatch.context() as scoped:
+        scoped.setenv("QDRANT_URL", "http://qdrant-test:6333")
+        scoped.setenv("INDEXER_KAFKA_RETRIES", "5")
 
-    reloaded = importlib.reload(config_module)
+        reloaded = importlib.reload(config_module)
 
-    assert reloaded.QDRANT_URL == "http://qdrant-test:6333"
-    assert reloaded.INDEXER_KAFKA_RETRIES == 5
+        assert reloaded.QDRANT_URL == "http://qdrant-test:6333"
+        assert reloaded.INDEXER_KAFKA_RETRIES == 5
+
+    importlib.reload(config_module)
 
 
 def test_get_version_returns_project_version():

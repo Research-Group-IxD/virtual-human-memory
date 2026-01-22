@@ -69,7 +69,21 @@ INDEXER_SHUTDOWN_TIMEOUT_SECONDS = _read_env(
     "INDEXER_SHUTDOWN_TIMEOUT_SECONDS", transform=float, default=10.0
 )
 INDEXER_LOG_LEVEL = _read_env("INDEXER_LOG_LEVEL", default="INFO")
-INDEXER_LOG_JSON = _read_env("INDEXER_LOG_JSON", transform=lambda x: x.lower() == "true", default=False)
+INDEXER_LOG_JSON = _read_env(
+    "INDEXER_LOG_JSON", transform=lambda x: x.lower() == "true", default=False
+)
+
+# Reteller Worker Configuration
+RETELLER_KAFKA_RETRIES = _read_env("RETELLER_KAFKA_RETRIES", transform=int, default=3)
+RETELLER_KAFKA_RETRY_BACKOFF_SECONDS = _read_env(
+    "RETELLER_KAFKA_RETRY_BACKOFF_SECONDS", transform=float, default=0.5
+)
+RETELLER_POLL_TIMEOUT_SECONDS = _read_env(
+    "RETELLER_POLL_TIMEOUT_SECONDS", transform=float, default=1.0
+)
+RETELLER_PRODUCER_FLUSH_TIMEOUT_SECONDS = _read_env(
+    "RETELLER_PRODUCER_FLUSH_TIMEOUT_SECONDS", transform=float, default=5.0
+)
 
 # Embedding dimensions by model
 EMBEDDING_DIMS = {

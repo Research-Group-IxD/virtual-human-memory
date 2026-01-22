@@ -18,16 +18,24 @@ def test_get_embedding_defaults_to_deterministic():
 
 
 def test_get_embedding_dim_respects_model_name(monkeypatch):
-    monkeypatch.setenv("EMBEDDING_MODEL", "nomic-embed-text")
+    with monkeypatch.context() as scoped:
+        scoped.setenv("EMBEDDING_MODEL", "nomic-embed-text")
+        importlib.reload(config_module)
+        importlib.reload(embedding_module)
+
+        assert embedding_module.get_embedding_dim() == 768
+
     importlib.reload(config_module)
     importlib.reload(embedding_module)
-
-    assert embedding_module.get_embedding_dim() == 768
 
 
 def test_get_embedding_dim_handles_prefixed_model(monkeypatch):
-    monkeypatch.setenv("EMBEDDING_MODEL", "ollama:nomic-embed-text")
+    with monkeypatch.context() as scoped:
+        scoped.setenv("EMBEDDING_MODEL", "ollama:nomic-embed-text")
+        importlib.reload(config_module)
+        importlib.reload(embedding_module)
+
+        assert embedding_module.get_embedding_dim() == 768
+
     importlib.reload(config_module)
     importlib.reload(embedding_module)
-
-    assert embedding_module.get_embedding_dim() == 768

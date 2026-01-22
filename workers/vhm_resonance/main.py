@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import datetime as dt
+from uuid import UUID
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 from confluent_kafka import Consumer, Producer
@@ -203,10 +204,12 @@ class ResonanceWorker:
                     "offset": msg.offset(),
                 },
             )
+            self._commit_message(msg, reason="processing_failed")
             return
 
         payload_bytes = json.dumps(response.model_dump(mode="json")).encode("utf-8")
         if not self._publish_response_with_retry(payload_bytes, response.request_id):
+            self._commit_message(msg, reason="publish_failed")
             return
 
         self._commit_message(msg, reason="published")
@@ -240,7 +243,7 @@ class ResonanceWorker:
         beats = [self._build_beat(act, hit, request_now) for act, hit in selected]
         return RecallResponse(request_id=request.request_id, beats=beats)
 
-    def _publish_response_with_retry(self, payload: bytes, request_id) -> bool:
+    def _publish_response_with_retry(self, payload: bytes, request_id: UUID) -> bool:
         attempts = self.settings.kafka_publish_retries + 1
         for attempt in range(1, attempts + 1):
             try:
@@ -267,8 +270,6 @@ class ResonanceWorker:
                     return False
                 if backoff > 0:
                     time.sleep(backoff)
-        return False
-
     def _commit_message(self, msg: Message, reason: str) -> None:
         try:
             self.consumer.commit(message=msg)

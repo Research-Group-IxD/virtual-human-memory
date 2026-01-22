@@ -1,5 +1,6 @@
 import datetime as dt
 import sys
+from uuid import uuid4
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -67,7 +68,7 @@ def register_dependency_stubs() -> SimpleNamespace:
 
 register_dependency_stubs()
 
-from vhm_common_utils.data_models import RecallRequest
+from vhm_common_utils.data_models import RecallRequest, RecallResponse
 from workers.vhm_resonance.config import ResonanceSettings
 from workers.vhm_resonance.main import (
     ResonanceWorker,
@@ -197,9 +198,30 @@ def test_publish_retry_success(monkeypatch):
     )
 
     monkeypatch.setattr("workers.vhm_resonance.main.time.sleep", lambda _: None)
-    ok = worker._publish_response_with_retry(b"payload", "req-1")
+    ok = worker._publish_response_with_retry(b"payload", uuid4())
 
     assert ok is True
+    assert producer.produce.call_count == 2
+    assert producer.flush.call_count == 2
+
+
+def test_publish_retry_failure(monkeypatch):
+    settings = ResonanceSettings(
+        kafka_publish_retries=1, kafka_publish_retry_backoff_seconds=0.01
+    )
+    producer = MagicMock()
+    producer.flush.side_effect = Exception("fail")
+    worker = ResonanceWorker(
+        settings=settings,
+        client=MagicMock(),
+        consumer=MagicMock(),
+        producer=producer,
+    )
+
+    monkeypatch.setattr("workers.vhm_resonance.main.time.sleep", lambda _: None)
+    ok = worker._publish_response_with_retry(b"payload", uuid4())
+
+    assert ok is False
     assert producer.produce.call_count == 2
     assert producer.flush.call_count == 2
 
@@ -222,6 +244,59 @@ def test_handle_message_commits_on_validation_error():
         consumer=consumer,
         producer=MagicMock(),
     )
+
+    worker._handle_message(StubMessage())
+
+    consumer.commit.assert_called_once()
+
+
+def test_handle_message_commits_on_processing_error():
+    class StubMessage:
+        def value(self):
+            return b'{"query":"hello"}'
+
+        def partition(self):
+            return 1
+
+        def offset(self):
+            return 42
+
+    consumer = MagicMock()
+    worker = ResonanceWorker(
+        settings=ResonanceSettings(),
+        client=MagicMock(),
+        consumer=consumer,
+        producer=MagicMock(),
+    )
+    worker._process_request = MagicMock(side_effect=RuntimeError("boom"))
+
+    worker._handle_message(StubMessage())
+
+    consumer.commit.assert_called_once()
+
+
+def test_handle_message_commits_on_publish_failure():
+    class StubMessage:
+        def value(self):
+            return b'{"query":"hello"}'
+
+        def partition(self):
+            return 2
+
+        def offset(self):
+            return 99
+
+    consumer = MagicMock()
+    worker = ResonanceWorker(
+        settings=ResonanceSettings(),
+        client=MagicMock(),
+        consumer=consumer,
+        producer=MagicMock(),
+    )
+    worker._process_request = MagicMock(
+        return_value=RecallResponse(request_id=uuid4(), beats=[])
+    )
+    worker._publish_response_with_retry = MagicMock(return_value=False)
 
     worker._handle_message(StubMessage())
 

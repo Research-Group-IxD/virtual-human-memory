@@ -21,7 +21,7 @@ Hello future padawan! This scroll captures how we unblocked the VHM workers on M
 | Docker build (`docker/worker.Dockerfile`) | New shared image: installs deps with `uv`, copies `common` + `workers`, sets sane entrypoint. | Every worker now has the right libraries and code. |
 | Entry point | Generates simple shell launcher using `$WORKER_MODULE`. | Same image works for all workers; no quoting bugs. |
 | PYTHONPATH | Set to `/app:/app/common/utils`. | Imports like `from vhm_common_utils import ...` finally resolve inside the container. |
-| Images | `eval "$(minikube docker-env)"` then rebuilt `vhm-indexer:0.1.1`, `vhm-resonance:0.1.0`, `vhm-reteller:0.1.0`. | Minikube now has fresh images; pods stop pulling broken ones. |
+| Images | `eval "$(minikube docker-env)"` then rebuilt `vhm-indexer:0.1.3`, `vhm-resonance:0.1.3`, `vhm-reteller:0.1.3`. | Minikube now has fresh images; pods stop pulling broken ones. |
 | Resonance worker (`workers/vhm_resonance/main.py`) | Modular refactor with typed settings, structured logging, and Qdrant retry logic. | Recall stays stable under transient broker hiccups and is easier to debug. |
 | Deployments | `kubectl rollout restart deployment/<worker> -n vhm`. | Forces K8s to pick up the new images and env. |
 
@@ -45,15 +45,15 @@ Hello future padawan! This scroll captures how we unblocked the VHM workers on M
 eval "$(minikube docker-env)"
 
 # 2. Build each worker image using the shared Dockerfile
-docker build -t vhm-indexer:0.1.1 \
+docker build -t vhm-indexer:0.1.3 \
   -f docker/worker.Dockerfile \
   --build-arg WORKER_MODULE=workers.vhm_indexer.main .
 
-docker build -t vhm-resonance:0.1.0 \
+docker build -t vhm-resonance:0.1.3 \
   -f docker/worker.Dockerfile \
   --build-arg WORKER_MODULE=workers.vhm_resonance.main .
 
-docker build -t vhm-reteller:0.1.0 \
+docker build -t vhm-reteller:0.1.3 \
   -f docker/worker.Dockerfile \
   --build-arg WORKER_MODULE=workers.vhm_reteller.main .
 

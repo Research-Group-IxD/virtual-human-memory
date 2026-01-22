@@ -37,6 +37,8 @@ class ResonanceSettings(BaseModel):
     producer_flush_timeout_seconds: float = Field(default=5.0, gt=0.0, le=60.0)
     qdrant_search_retries: int = Field(default=3, ge=0, le=10)
     qdrant_retry_backoff_seconds: float = Field(default=0.25, ge=0.0, le=5.0)
+    kafka_publish_retries: int = Field(default=3, ge=0, le=10)
+    kafka_publish_retry_backoff_seconds: float = Field(default=0.5, ge=0.0, le=5.0)
 
     @computed_field(return_type=dict[str, str])
     @property
@@ -45,6 +47,7 @@ class ResonanceSettings(BaseModel):
             "bootstrap.servers": self.kafka_bootstrap_servers,
             "group.id": "resonance",
             "auto.offset.reset": "earliest",
+            "enable.auto.commit": False,
         }
 
     @computed_field(return_type=dict[str, str])

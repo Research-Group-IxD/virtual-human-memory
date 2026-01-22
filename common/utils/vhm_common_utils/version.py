@@ -1,6 +1,6 @@
 """Version management for VHM workers.
 
-This module provides functionality to read worker versions from pyproject.toml,
+This module provides functionality to read the project version from pyproject.toml,
 allowing each worker to log its version at startup for debugging and monitoring.
 """
 
@@ -14,17 +14,25 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_cached_version: str | None = None
 
-def get_version(worker_name: str) -> str:
+
+def get_version(worker_name: str | None = None) -> str:
     """
-    Reads the version for a specific worker from the pyproject.toml file.
+    Reads the project version from pyproject.toml.
     
     Args:
-        worker_name: Name of the worker (e.g., "indexer", "resonance", "reteller")
+        worker_name: Optional, kept for backwards compatibility but ignored.
+                     All workers share the same project version.
     
     Returns:
-        Version string (e.g., "0.1.0") or "0.0.0-unknown" if version cannot be read
+        Version string (e.g., "0.1.3") or "0.0.0-unknown" if version cannot be read
     """
+    global _cached_version
+    
+    if _cached_version is not None:
+        return _cached_version
+    
     if toml is None:
         logger.warning("toml package not available, cannot read version")
         return "0.0.0-unknown"
@@ -41,14 +49,15 @@ def get_version(worker_name: str) -> str:
             return "0.0.0-unknown"
         
         data = toml.load(pyproject_path)
-        version = data.get("tool", {}).get("vhm", {}).get("versions", {}).get(worker_name)
+        version = data.get("project", {}).get("version")
         
         if version is None:
-            logger.warning(f"Version not found for worker '{worker_name}' in pyproject.toml")
+            logger.warning("Version not found in [project] section of pyproject.toml")
             return "0.0.0-unknown"
         
-        return str(version)
+        _cached_version = str(version)
+        return _cached_version
     except Exception as e:
-        logger.warning(f"Could not read version for '{worker_name}': {e}")
+        logger.warning(f"Could not read version: {e}")
         return "0.0.0-unknown"
 

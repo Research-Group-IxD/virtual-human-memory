@@ -6,6 +6,7 @@ import time
 from typing import Any, Dict, List
 
 from confluent_kafka import Consumer, Producer
+from confluent_kafka.message import Message
 import requests
 from pydantic import ValidationError
 
@@ -327,7 +328,7 @@ def _publish_to_kafka_with_retry(
     return False
 
 
-def _commit_message(consumer: Consumer, msg, reason: str) -> None:
+def _commit_message(consumer: Consumer, msg: Message, reason: str) -> None:
     try:
         consumer.commit(message=msg)
         print(
@@ -339,6 +340,59 @@ def _commit_message(consumer: Consumer, msg, reason: str) -> None:
             f"[reteller] failed to commit message ({reason}): {exc}",
             file=sys.stderr,
         )
+
+
+def _process_message(consumer: Consumer, producer: Producer, msg: Message) -> None:
+    try:
+        response = RecallResponse.model_validate_json(msg.value())
+    except ValidationError as e:
+        print(
+            f"[reteller] invalid payload: {e}",
+            file=sys.stderr,
+        )
+        _commit_message(consumer, msg, reason="validation_failed")
+        return
+
+    try:
+        request_id = str(response.request_id)
+        beats = [beat.model_dump(mode="json") for beat in response.beats]
+        guidance = build_narrative_guidance(beats)
+        text = None
+        messages = [
+            {"role": "system", "content": guidance["system"]},
+            {"role": "user", "content": guidance["user"]},
+        ]
+        if OPENAI_API_KEY:
+            text = call_openai(messages)
+        if text is None:
+            text = call_portkey(messages)
+        if text is None and OLLAMA_BASE_URL:
+            prompt = "\n\n".join([guidance["system"], guidance["user"]])
+            text = call_ollama(prompt)
+        if text is None:
+            text = retell_stub(beats)
+        out = {"request_id": request_id, "retelling": text}
+        payload = json.dumps(out).encode("utf-8")
+        published = _publish_to_kafka_with_retry(
+            producer,
+            TOP_OUT,
+            payload,
+            retries=RETELLER_KAFKA_RETRIES or 3,
+            backoff_seconds=RETELLER_KAFKA_RETRY_BACKOFF_SECONDS or 0.5,
+            flush_timeout_seconds=RETELLER_PRODUCER_FLUSH_TIMEOUT_SECONDS or 5.0,
+        )
+        if published:
+            _commit_message(consumer, msg, reason="published")
+            print(f"[reteller] retold {request_id}")
+        else:
+            print(
+                f"[reteller] publish failed after retries for {request_id}",
+                file=sys.stderr,
+            )
+            _commit_message(consumer, msg, reason="publish_failed")
+    except Exception as e:
+        print(f"[reteller] exception: {e}", file=sys.stderr)
+        _commit_message(consumer, msg, reason="exception")
 
 
 def main():
@@ -366,51 +420,7 @@ def main():
             if msg.error():
                 print(f"[reteller] error: {msg.error()}", file=sys.stderr)
                 continue
-            try:
-                response = RecallResponse.model_validate_json(msg.value())
-                request_id = str(response.request_id)
-                beats = [beat.model_dump(mode="json") for beat in response.beats]
-                guidance = build_narrative_guidance(beats)
-                text = None
-                messages = [
-                    {"role": "system", "content": guidance["system"]},
-                    {"role": "user", "content": guidance["user"]},
-                ]
-                if OPENAI_API_KEY:
-                    text = call_openai(messages)
-                if text is None:
-                    text = call_portkey(messages)
-                if text is None and OLLAMA_BASE_URL:
-                    prompt = "\n\n".join([guidance["system"], guidance["user"]])
-                    text = call_ollama(prompt)
-                if text is None:
-                    text = retell_stub(beats)
-                out = {"request_id": request_id, "retelling": text}
-                payload = json.dumps(out).encode("utf-8")
-                published = _publish_to_kafka_with_retry(
-                    producer,
-                    TOP_OUT,
-                    payload,
-                    retries=RETELLER_KAFKA_RETRIES or 3,
-                    backoff_seconds=RETELLER_KAFKA_RETRY_BACKOFF_SECONDS or 0.5,
-                    flush_timeout_seconds=RETELLER_PRODUCER_FLUSH_TIMEOUT_SECONDS or 5.0,
-                )
-                if published:
-                    _commit_message(consumer, msg, reason="published")
-                    print(f"[reteller] retold {request_id}")
-                else:
-                    print(
-                        f"[reteller] publish failed after retries for {request_id}",
-                        file=sys.stderr,
-                    )
-            except ValidationError as e:
-                print(
-                    f"[reteller] invalid payload: {e}",
-                    file=sys.stderr,
-                )
-                _commit_message(consumer, msg, reason="validation_failed")
-            except Exception as e:
-                print(f"[reteller] exception: {e}", file=sys.stderr)
+            _process_message(consumer, producer, msg)
     finally:
         consumer.close()
 if __name__ == "__main__":

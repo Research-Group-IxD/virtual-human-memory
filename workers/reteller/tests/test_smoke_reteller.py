@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from workers.vhm_reteller.main import (
     _commit_message,
+    _process_message,
     _publish_to_kafka_with_retry,
     build_narrative_guidance,
 )
@@ -43,6 +44,24 @@ def test_publish_retry_failure():
     assert producer.flush.call_count == 3
 
 
+def test_publish_retry_backoff_uses_delay():
+    producer = MagicMock()
+    producer.flush.side_effect = [Exception("fail"), None]
+
+    with patch("workers.vhm_reteller.main.time.sleep") as sleep_mock:
+        ok = _publish_to_kafka_with_retry(
+            producer,
+            "topic",
+            b"payload",
+            retries=1,
+            backoff_seconds=0.5,
+            flush_timeout_seconds=1.0,
+        )
+
+    assert ok is True
+    sleep_mock.assert_called_once_with(0.5)
+
+
 def test_commit_message_calls_consumer():
     consumer = MagicMock()
 
@@ -68,3 +87,22 @@ def test_build_narrative_guidance_returns_prompts():
     assert "system" in guidance
     assert "user" in guidance
     assert "Integrated recap" in guidance["user"]
+
+
+def test_process_message_commits_on_validation_error():
+    consumer = MagicMock()
+    producer = MagicMock()
+
+    class StubMessage:
+        def value(self):
+            return b'{"invalid": true}'
+
+        def partition(self):
+            return 3
+
+        def offset(self):
+            return 12
+
+    _process_message(consumer, producer, StubMessage())
+
+    consumer.commit.assert_called_once()

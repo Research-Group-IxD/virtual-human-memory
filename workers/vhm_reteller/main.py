@@ -1,8 +1,14 @@
-import json, sys, re, collections
-from typing import List, Dict, Any
+import collections
+import json
+import re
+import sys
+import time
+from typing import Any, Dict, List
 
 from confluent_kafka import Consumer, Producer
+from confluent_kafka.message import Message
 import requests
+from pydantic import ValidationError
 
 from vhm_common_utils.embedding import perceived_age_to_days
 from vhm_common_utils.config import (
@@ -15,7 +21,12 @@ from vhm_common_utils.config import (
     PORTKEY_BASE_URL,
     PORTKEY_CONFIG_ID,
     PORTKEY_MODEL,
+    RETELLER_KAFKA_RETRIES,
+    RETELLER_KAFKA_RETRY_BACKOFF_SECONDS,
+    RETELLER_POLL_TIMEOUT_SECONDS,
+    RETELLER_PRODUCER_FLUSH_TIMEOUT_SECONDS,
 )
+from vhm_common_utils.data_models import RecallResponse
 from vhm_common_utils.health import run_health_check_server
 from vhm_common_utils.version import get_version
 
@@ -289,6 +300,101 @@ def build_narrative_guidance(beats: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {"system": system_prompt, "user": user_prompt}
 
 
+def _publish_to_kafka_with_retry(
+    producer: Producer,
+    topic: str,
+    message: bytes,
+    *,
+    retries: int,
+    backoff_seconds: float,
+    flush_timeout_seconds: float,
+) -> bool:
+    attempts = retries + 1
+    for attempt in range(1, attempts + 1):
+        try:
+            producer.produce(topic, message)
+            producer.flush(timeout=flush_timeout_seconds)
+            return True
+        except Exception as exc:  # noqa: BLE001 - want to log and retry
+            backoff = backoff_seconds * attempt
+            print(
+                f"[reteller] publish failed (attempt {attempt}/{attempts}): {exc}",
+                file=sys.stderr,
+            )
+            if attempt >= attempts:
+                return False
+            if backoff > 0:
+                time.sleep(backoff)
+    return False
+
+
+def _commit_message(consumer: Consumer, msg: Message, reason: str) -> None:
+    try:
+        consumer.commit(message=msg)
+        print(
+            f"[reteller] committed message ({reason}) partition={msg.partition()} offset={msg.offset()}",
+            file=sys.stderr,
+        )
+    except Exception as exc:
+        print(
+            f"[reteller] failed to commit message ({reason}): {exc}",
+            file=sys.stderr,
+        )
+
+
+def _process_message(consumer: Consumer, producer: Producer, msg: Message) -> None:
+    try:
+        response = RecallResponse.model_validate_json(msg.value())
+    except ValidationError as e:
+        print(
+            f"[reteller] invalid payload: {e}",
+            file=sys.stderr,
+        )
+        _commit_message(consumer, msg, reason="validation_failed")
+        return
+
+    try:
+        request_id = str(response.request_id)
+        beats = [beat.model_dump(mode="json") for beat in response.beats]
+        guidance = build_narrative_guidance(beats)
+        text = None
+        messages = [
+            {"role": "system", "content": guidance["system"]},
+            {"role": "user", "content": guidance["user"]},
+        ]
+        if OPENAI_API_KEY:
+            text = call_openai(messages)
+        if text is None:
+            text = call_portkey(messages)
+        if text is None and OLLAMA_BASE_URL:
+            prompt = "\n\n".join([guidance["system"], guidance["user"]])
+            text = call_ollama(prompt)
+        if text is None:
+            text = retell_stub(beats)
+        out = {"request_id": request_id, "retelling": text}
+        payload = json.dumps(out).encode("utf-8")
+        published = _publish_to_kafka_with_retry(
+            producer,
+            TOP_OUT,
+            payload,
+            retries=RETELLER_KAFKA_RETRIES or 3,
+            backoff_seconds=RETELLER_KAFKA_RETRY_BACKOFF_SECONDS or 0.5,
+            flush_timeout_seconds=RETELLER_PRODUCER_FLUSH_TIMEOUT_SECONDS or 5.0,
+        )
+        if published:
+            _commit_message(consumer, msg, reason="published")
+            print(f"[reteller] retold {request_id}")
+        else:
+            print(
+                f"[reteller] publish failed after retries for {request_id}",
+                file=sys.stderr,
+            )
+            _commit_message(consumer, msg, reason="publish_failed")
+    except Exception as e:
+        print(f"[reteller] exception: {e}", file=sys.stderr)
+        _commit_message(consumer, msg, reason="exception")
+
+
 def main():
     __version__ = get_version("reteller")
     print(f"[reteller] Starting reteller worker version {__version__}")
@@ -300,6 +406,7 @@ def main():
             "bootstrap.servers": KAFKA_BOOTSTRAP,
             "group.id": "reteller",
             "auto.offset.reset": "earliest",
+            "enable.auto.commit": False,
         }
     )
     producer = Producer({"bootstrap.servers": KAFKA_BOOTSTRAP})
@@ -307,37 +414,13 @@ def main():
     print("[reteller] listening...")
     try:
         while True:
-            msg = consumer.poll(1.0)
+            msg = consumer.poll(RETELLER_POLL_TIMEOUT_SECONDS or 1.0)
             if msg is None:
                 continue
             if msg.error():
                 print(f"[reteller] error: {msg.error()}", file=sys.stderr)
                 continue
-            try:
-                payload = json.loads(msg.value().decode("utf-8"))
-                request_id = payload["request_id"]
-                beats = payload["beats"]
-                guidance = build_narrative_guidance(beats)
-                text = None
-                messages = [
-                    {"role": "system", "content": guidance["system"]},
-                    {"role": "user", "content": guidance["user"]},
-                ]
-                if OPENAI_API_KEY:
-                    text = call_openai(messages)
-                if text is None:
-                    text = call_portkey(messages)
-                if text is None and OLLAMA_BASE_URL:
-                    prompt = "\n\n".join([guidance["system"], guidance["user"]])
-                    text = call_ollama(prompt)
-                if text is None:
-                    text = retell_stub(beats)
-                out = {"request_id": request_id, "retelling": text}
-                producer.produce(TOP_OUT, json.dumps(out).encode("utf-8"))
-                producer.flush()
-                print(f"[reteller] retold {request_id}")
-            except Exception as e:
-                print(f"[reteller] exception: {e}", file=sys.stderr)
+            _process_message(consumer, producer, msg)
     finally:
         consumer.close()
 if __name__ == "__main__":

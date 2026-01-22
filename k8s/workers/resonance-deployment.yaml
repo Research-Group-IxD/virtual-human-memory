@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: resonance
-        image: ghcr.io/Research-Group-IxD/vhm-resonance:0.1.0
+        image: ghcr.io/Research-Group-IxD/vhm-resonance:0.1.3
         imagePullPolicy: IfNotPresent
         # The command is now handled by the Dockerfile's CMD
         # command: ["/bin/sh", "-c", "echo 'Resonance worker - update with actual image'; sleep infinity"]

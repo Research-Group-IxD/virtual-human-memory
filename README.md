@@ -46,9 +46,9 @@ eval "$(minikube docker-env)"
 
 # 3. Build the worker images
 # (See the recovery guide for the full docker build commands)
-docker build -t vhm-indexer:0.1.1 ...
-docker build -t vhm-resonance:0.1.0 ...
-docker build -t vhm-reteller:0.1.0 ...
+docker build -t vhm-indexer:0.1.3 ...
+docker build -t vhm-resonance:0.1.3 ...
+docker build -t vhm-reteller:0.1.3 ...
 
 # 4. Deploy the full application to Minikube
 kubectl apply -f k8s/infrastructure/
@@ -77,7 +77,7 @@ To build and push an image (e.g., the indexer), follow this pattern:
 # Define variables
 export ORG="Research-Group-IxD"
 export IMAGE_NAME="vhm-indexer"
-export TAG="0.1.1"
+export TAG="0.1.3"
 
 # 1. Build the image using the shared Dockerfile
 docker build -t "${IMAGE_NAME}:${TAG}" \

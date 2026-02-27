@@ -6,7 +6,7 @@ import time
 from typing import Any, Dict, List
 
 from confluent_kafka import Consumer, Producer
-from confluent_kafka.message import Message
+from confluent_kafka import Message
 import requests
 from pydantic import ValidationError
 

@@ -11,7 +11,7 @@ from uuid import UUID
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 from confluent_kafka import Consumer, Producer
-from confluent_kafka.message import Message
+from confluent_kafka import Message
 from pydantic import ValidationError
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import ScoredPoint
@@ -41,9 +41,10 @@ def configure_logging() -> None:
 def search_anchors(
     client: QdrantClient, collection: str, query_vec: Sequence[float], top_k: int
 ) -> Sequence[ScoredPoint]:
-    return client.search(
-        collection_name=collection, query_vector=query_vec, limit=top_k, with_payload=True
+    response = client.query_points(
+        collection_name=collection, query=query_vec, limit=top_k, with_payload=True
     )
+    return response.points
 
 
 def deterministic_query_vec(text: str) -> List[float]:

@@ -6,6 +6,10 @@ This repository is the central monorepo for the Virtual Human Memory (VHM) proje
 
 **[➡️ View the full Project Page here](https://research-group-ixd.github.io/virtual-human-memory/)**
 
+**For researchers:** [PURE_SHOWCASE.md](PURE_SHOWCASE.md) — ready-to-use text for uploading this project to Pure (institutional research portal).
+
+**Chat with this repo:** [DeepWiki](https://deepwiki.com/Research-Group-IxD/virtual-human-memory) — index and chat with this repository.
+
 ## Architecture
 
 The VHM system is built on a distributed, microservices architecture orchestrated by Kubernetes. This monorepo contains all the code for the following services:

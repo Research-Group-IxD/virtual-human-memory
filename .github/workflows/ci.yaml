@@ -59,7 +59,7 @@ jobs:
         run: uv pip install -e .
 
       - name: Start test infrastructure
-        run: docker compose -f docker-compose.test.yaml up -d --wait
+        run: docker compose -f docker-compose.test.yaml up -d --wait --wait-timeout 120
 
       - name: Run integration tests
         env:

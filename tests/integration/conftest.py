@@ -27,7 +27,7 @@ from qdrant_client import QdrantClient
 # of confluent-kafka. Must happen before any worker module is imported.
 # ---------------------------------------------------------------------------
 
-if "confluent_kafka.message" not in sys.modules:
+if importlib.util.find_spec("confluent_kafka.message") is None:
     sys.modules["confluent_kafka.message"] = SimpleNamespace(
         Message=type("StubMessage", (), {})
     )

@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/Research-Group-IxD/virtual-human-memory/actions/workflows/ci.yaml/badge.svg)](https://github.com/Research-Group-IxD/virtual-human-memory/actions/workflows/ci.yaml)
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Research-Group-IxD/virtual-human-memory)
+
 This repository is the central monorepo for the Virtual Human Memory (VHM) project, a multi-agent, psychologically-grounded, long-term memory system for virtual humans. Our goal is to enable emergent identity through the stories virtual humans tell over time.
 
 **[➡️ View the full Project Page here](https://research-group-ixd.github.io/virtual-human-memory/)**
@@ -17,6 +19,7 @@ The VHM system is built on a distributed, microservices architecture orchestrate
 - `k8s/`: All Kubernetes manifests for deploying the system.
 
 ### Resonance Worker (Production-Ready Highlights)
+
 - Typed configuration surface backed by Pydantic ensures consistent defaults across dev, staging, and prod.
 - Structured logging + retry-aware Qdrant calls keep recall behaviour transparent under load.
 - Deterministic request/response models now power richer unit tests (`uv run pytest -k resonance`) for CI confidence.
@@ -147,6 +150,7 @@ uv run streamlit run tools/demo/indexer_demo.py
 ```
 
 Features:
+
 - Create and send memory anchors
 - Visualize the complete processing flow (Kafka → Indexer → Qdrant)
 - Inspect stored anchors and their embeddings
@@ -163,6 +167,7 @@ uv run python tools/demo_three_retells.py
 ```
 
 This script:
+
 1. Seeds three memory anchors with different timestamps
 2. Sends a recall request
 3. Waits for resonance beats

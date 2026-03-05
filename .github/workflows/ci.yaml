@@ -29,10 +29,49 @@ jobs:
       - name: Install project
         run: uv pip install -e .
 
-      - name: Run tests
+      - name: Run unit tests
         env:
           PYTHONPATH: "${{ github.workspace }}:${{ github.workspace }}/common/utils"
-        run: uv run pytest
+        run: uv run pytest -m "not integration"
+
+  integration-tests:
+    name: Integration Tests
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          pip install --upgrade pip
+          pip install uv
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Install project
+        run: uv pip install -e .
+
+      - name: Start test infrastructure
+        run: docker compose -f docker-compose.test.yaml up -d --wait --wait-timeout 120
+
+      - name: Run integration tests
+        env:
+          PYTHONPATH: "${{ github.workspace }}:${{ github.workspace }}/common/utils"
+          KAFKA_BOOTSTRAP: localhost:19092
+          QDRANT_URL: http://localhost:16333
+          EMBEDDING_MODEL: deterministic
+        run: uv run pytest tests/integration/ -v -m integration
+
+      - name: Stop test infrastructure
+        if: always()
+        run: docker compose -f docker-compose.test.yaml down -v
 
   build-workers:
     name: Build worker images

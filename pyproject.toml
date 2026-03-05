@@ -36,6 +36,13 @@ dependencies = [
     "pandas>=2.0.0",
 ]
 
+[tool.pytest.ini_options]
+pythonpath = [".", "common/utils"]
+markers = [
+    "integration: requires Redpanda + Qdrant (deselect with -m 'not integration')",
+    "e2e: full pipeline end-to-end test (slow)",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

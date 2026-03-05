@@ -9,3 +9,6 @@ venv/
 # Temporary documentation files
 BRANCH_OVERVIEW.md
 .obsidian
+.aider.tags.cache.v4
+.aider.chat.history.md
+.aider.input.history
